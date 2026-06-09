@@ -52,3 +52,22 @@
 .phrase-activee {
   background: #fff3cd;
 }
+
+.text-center {
+  text-align: center;
+}
+
+// Desktop container adjustments
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+// Mobile container adjustments
+@media (max-width: 600px) {
+  .container {
+    width: 100%;
+    padding: 10px;
+  }
+}

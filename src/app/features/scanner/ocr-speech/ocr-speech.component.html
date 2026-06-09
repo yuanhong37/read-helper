@@ -1,64 +1,59 @@
-<div style="text-align: center; padding: 20px;">
-  <h1>POC Liseur de Texte 🎙️</h1>
+<div class="container">
+  <div style="text-align: center; padding: 20px;">
+    <h1>POC Liseur de Texte 🎙️</h1>
 
-  <button (click)="lancerLeScan()" [disabled]="enCoursDeChargement">
-    {{ enCoursDeChargement ? 'Traitement en cours...' : 'Prendre une photo et lire' }}
-  </button>
+    <button (click)="lancerLeScan()" [disabled]="enCoursDeChargement">
+      {{ enCoursDeChargement ? 'Traitement en cours...' : 'Prendre une photo et lire' }}
+    </button>
 
-  <div *ngIf="voixDisponibles.length" style="margin-top: 12px;">
-    <label>
-      Voix :
-      <select (change)="surChangementVoix($event)">
-        <option *ngFor="let v of voixDisponibles" [value]="toutesLesVoix.indexOf(v)" [selected]="toutesLesVoix.indexOf(v) === voixSelectionnee">
-          {{ v.voiceURI }} ({{ v.lang }}){{ v.default ? ' [Par défaut]' : '' }}
-        </option>
-      </select>
-    </label>
-  </div>
+    <div *ngIf="voixDisponibles.length" style="margin-top: 12px;">
+      <label>
+        Voix :
+        <select (change)="surChangementVoix($event)">
+          <option *ngFor="let v of voixDisponibles" [value]="toutesLesVoix.indexOf(v)"
+            [selected]="toutesLesVoix.indexOf(v) === voixSelectionnee">
+            {{ v.voiceURI }} ({{ v.lang }}){{ v.default ? ' [Par défaut]' : '' }}
+          </option>
+        </select>
+      </label>
+    </div>
 
-  <div *ngIf="imageAffichee" style="margin-top: 20px;">
+    <!-- <div *ngIf="imageAffichee" style="margin-top: 20px;">
     <h3>Image capturée :</h3>
     <img [src]="imageAffichee" style="max-width: 80%; max-height: 200px; border-radius: 8px;" />
-  </div>
+  </div> -->
 
-  <div *ngIf="texteExtrait" style="margin-top: 20px; padding: 10px; background: #f0f0f0;">
-    <h3>Texte détecté :</h3>
+    <div *ngIf="texteExtrait"  style="margin-top: 20px; padding: 10px; background: #f0f0f0; text-align: left; border-radius: 8px; margin-left: auto; margin-right: auto;">
+      <div class="tab-bar" *ngIf="texteExtrait" style="margin-top: 16px;">
+        <button class="tab-btn" [class.tab-active]="modeLecture === LectureMode.Full"
+          (click)="changerMode(LectureMode.Full)">Lire le texte</button>
+        <button class="tab-btn" [class.tab-active]="modeLecture === LectureMode.Sentence"
+          (click)="changerMode(LectureMode.Sentence)">Par phrase</button>
+      </div>
+      <div *ngIf="modeLecture === LectureMode.Full" style="margin-top: 12px;">
+        <div class="text-center">
+          <button *ngIf="!enCoursDeLecture" (click)="lireLeTexte()" [disabled]="enCoursDeChargement">
+            Lire le texte
+          </button>
+          <button *ngIf="enCoursDeLecture" (click)="arreterLaLecture()">
+            Arrêter
+          </button>
+        </div>
+        <p>
+          <span *ngFor="let part of mots; let i = index">
+            <span *ngIf="part.estMot" class="mot-clickable" [class.mot-actif]="motActifIndex === i"
+              (click)="prononcerMot(part.texte, i)">{{ part.texte }}</span>
+            <span *ngIf="!part.estMot">{{ part.texte }}</span>
+          </span>
+        </p>
+      </div>
 
-    <div *ngIf="modeLecture === LectureMode.Full">
-      <p>
-        <span *ngFor="let part of mots; let i = index">
-          <span *ngIf="part.estMot" class="mot-clickable" [class.mot-actif]="motActifIndex === i"
-                (click)="prononcerMot(part.texte, i)">{{ part.texte }}</span>
-          <span *ngIf="!part.estMot">{{ part.texte }}</span>
-        </span>
-      </p>
-    </div>
-
-    <div *ngIf="modeLecture === LectureMode.Sentence && phrases.length">
-      <div *ngFor="let phrase of phrases; let i = index"
-           class="phrase-cliquable"
-           [class.phrase-activee]="phraseActiveeIndex === i"
-           (click)="prononcerPhrase(phrase, i)">
-        {{ phrase }}
+      <div *ngIf="modeLecture === LectureMode.Sentence && phrases.length" style="margin-top: 12px;">
+        <div *ngFor="let phrase of phrases; let i = index" class="phrase-cliquable"
+          [class.phrase-activee]="phraseActiveeIndex === i" (click)="prononcerPhrase(phrase, i)">
+          {{ phrase }}
+        </div>
       </div>
     </div>
-  </div>
-
-  <div class="tab-bar" *ngIf="texteExtrait" style="margin-top: 16px;">
-    <button class="tab-btn" [class.tab-active]="modeLecture === LectureMode.Full" (click)="changerMode(LectureMode.Full)">Lire le texte</button>
-    <button class="tab-btn" [class.tab-active]="modeLecture === LectureMode.Sentence" (click)="changerMode(LectureMode.Sentence)">Par phrase</button>
-  </div>
-
-  <div *ngIf="modeLecture === LectureMode.Full && texteExtrait" style="margin-top: 12px;">
-    <button *ngIf="!enCoursDeLecture" (click)="lireLeTexte()" [disabled]="enCoursDeChargement">
-      Lire le texte
-    </button>
-    <button *ngIf="enCoursDeLecture" (click)="arreterLaLecture()">
-      Arrêter
-    </button>
-  </div>
-
-  <div *ngIf="modeLecture === LectureMode.Sentence && enCoursDeLecture" style="margin-top: 12px;">
-    <button (click)="arreterLaLecture()">Arrêter</button>
   </div>
 </div>

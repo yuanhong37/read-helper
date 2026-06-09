@@ -131,7 +131,12 @@ export class OcrSpeechComponent implements OnInit, OnDestroy {
 
   async prononcerPhrase(phrase: string, index: number) {
     await this.ttsService.arreterLecture();
-    this.enCoursDeLecture = false;
+    if(this.enCoursDeLecture) {
+      this.enCoursDeLecture = false;
+      this.phraseActiveeIndex = null;
+      return;
+    }
+    this.enCoursDeLecture = true;
     this.phraseActiveeIndex = index;
     const phrasePropre = phrase.trim();
     if (phrasePropre) {
