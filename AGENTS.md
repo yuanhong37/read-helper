@@ -12,14 +12,22 @@ ng test               # Karma + Jasmine unit tests
 ## Architecture
 
 - **Single Angular module** (`AppModule`) — no routing, no lazy loading.
-- **`src/app/core/services/`** — three services: `ocr-speech.service.ts` (implemented), `camera.services.ts` and `tts.service.ts` (both empty stubs).
-- **`src/app/features/scanner/`** — empty; reserved for future feature modules.
-- **Entry point**: `src/main.ts` → `AppModule` → `AppComponent`.
+- **Entry point**: `src/main.ts` → `AppModule` → `AppComponent` (shell) → `OcrSpeechComponent`.
+- **`OcrSpeechComponent`** at `src/app/features/scanner/ocr-speech/` owns all UI (scan button, voice selector, image preview, read/stop buttons).
+- **`AppComponent`** is a minimal shell — just renders `<app-ocr-speech>`.
+- **Three single-responsibility services** in `src/app/core/services/`:
+  | Service | Responsibility |
+  |---|---|
+  | `CameraService` | `prendrePhoto()` → `Camera.getPhoto()` |
+  | `OcrSpeechService` | `extraireTexte()` → tesseract.js OCR with `'fra'` |
+  | `TtsService` | `getVoices()`, `lireTexte()`, `arreterLecture()` → `TextToSpeech` |
 
 The app is a photo → OCR → TTS pipeline:
 1. `Camera.getPhoto()` (Capacitor Camera)
 2. `tesseract.js` with `'fra'` language (French OCR)
 3. `TextToSpeech.speak()` with `lang: 'fr-FR'`
+
+Users select a specific TTS voice from the dropdown (filtered to French) for more natural output.
 
 ## Framework & toolchain quirks
 

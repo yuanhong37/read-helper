@@ -1,0 +1,11 @@
+.mot-clickable {
+  cursor: pointer;
+
+  &:hover {
+    background: #e0e0e0;
+  }
+}
+
+.mot-actif {
+  background: #fff3cd;
+}
