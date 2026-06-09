@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
-import { TextToSpeech } from '@capacitor-community/text-to-speech';
+import { TextToSpeech, SpeechSynthesisVoice } from '@capacitor-community/text-to-speech';
 import { createWorker } from 'tesseract.js';
 
 @Injectable({
@@ -32,17 +32,29 @@ export class OcrSpeechService {
     return ret.data.text;
   }
 
-  // 3. Lire le texte avec une voix française
-  async lireTexte(texte: string): Promise<void> {
+  // 3. Récupérer les voix disponibles
+  async getVoices(): Promise<SpeechSynthesisVoice[]> {
+    const { voices } = await TextToSpeech.getSupportedVoices();
+    return voices;
+  }
+
+  // 4. Lire le texte avec une voix française
+  async lireTexte(texte: string, voice?: number): Promise<void> {
     if (!texte || texte.trim() === '') return;
 
     await TextToSpeech.speak({
       text: texte,
-      lang: 'fr-FR', // Force la langue française
-      rate: 1.0,     // Vitesse de lecture
-      pitch: 1.0,    // Hauteur de la voix
+      lang: 'fr-FR',
+      rate: 1.0,
+      pitch: 1.0,
       volume: 1.0,
       category: 'ambient',
+      voice,
     });
+  }
+
+  // 5. Arrêter la lecture
+  async arreterLecture(): Promise<void> {
+    await TextToSpeech.stop();
   }
 }
