@@ -4,12 +4,23 @@ import { CameraService } from '../../../core/services/camera.services';
 import { OcrSpeechService } from '../../../core/services/ocr-speech.service';
 import { TtsService } from '../../../core/services/tts.service';
 
+enum LectureMode {
+  Full = 'full',
+  Sentence = 'sentence',
+}
+
+const DELAI_MOT_MS = 80;
+const DELAI_MOT_BASE_MS = 300;
+const DELAI_PHRASE_MS = 50;
+const DELAI_PHRASE_BASE_MS = 500;
+
 @Component({
   selector: 'app-ocr-speech',
   templateUrl: './ocr-speech.component.html',
   styleUrls: ['./ocr-speech.component.scss']
 })
 export class OcrSpeechComponent implements OnInit {
+  LectureMode = LectureMode;
   imageAffichee: string | undefined = '';
   texteExtrait: string = '';
   enCoursDeChargement: boolean = false;
@@ -18,11 +29,18 @@ export class OcrSpeechComponent implements OnInit {
   voixDisponibles: SpeechSynthesisVoice[] = [];
   voixSelectionnee: number = 0;
   motActifIndex: number | null = null;
+  modeLecture: LectureMode = LectureMode.Full;
+  phraseActiveeIndex: number | null = null;
 
   get mots(): { texte: string; estMot: boolean }[] {
     if (!this.texteExtrait) return [];
     const parties = this.texteExtrait.split(/(\s+)/);
     return parties.map(p => ({ texte: p, estMot: /[a-zA-ZÀ-ÿ]/.test(p) }));
+  }
+
+  get phrases(): string[] {
+    if (!this.texteExtrait) return [];
+    return this.texteExtrait.split(/(?<=[.!?])\s+/).filter(p => p.trim().length > 0);
   }
 
   constructor(
@@ -51,6 +69,9 @@ export class OcrSpeechComponent implements OnInit {
     try {
       this.enCoursDeChargement = true;
       this.enCoursDeLecture = false;
+      this.modeLecture = LectureMode.Full;
+      this.motActifIndex = null;
+      this.phraseActiveeIndex = null;
 
       this.imageAffichee = await this.cameraService.prendrePhoto();
       if (!this.imageAffichee) return;
@@ -72,6 +93,8 @@ export class OcrSpeechComponent implements OnInit {
   async arreterLaLecture() {
     await this.ttsService.arreterLecture();
     this.enCoursDeLecture = false;
+    this.motActifIndex = null;
+    this.phraseActiveeIndex = null;
   }
 
   async prononcerMot(mot: string, index: number) {
@@ -84,6 +107,26 @@ export class OcrSpeechComponent implements OnInit {
     }
     setTimeout(() => {
       this.motActifIndex = null;
-    }, motPropre.length * 80 + 300);
+    }, motPropre.length * DELAI_MOT_MS + DELAI_MOT_BASE_MS);
+  }
+
+  changerMode(mode: LectureMode) {
+    this.modeLecture = mode;
+    this.arreterLaLecture();
+    this.motActifIndex = null;
+    this.phraseActiveeIndex = null;
+  }
+
+  async prononcerPhrase(phrase: string, index: number) {
+    await this.ttsService.arreterLecture();
+    this.enCoursDeLecture = false;
+    this.phraseActiveeIndex = index;
+    const phrasePropre = phrase.trim();
+    if (phrasePropre) {
+      await this.ttsService.lireTexte(phrasePropre, this.voixSelectionnee);
+    }
+    setTimeout(() => {
+      this.phraseActiveeIndex = null;
+    }, phrasePropre.length * DELAI_PHRASE_MS + DELAI_PHRASE_BASE_MS);
   }
 }

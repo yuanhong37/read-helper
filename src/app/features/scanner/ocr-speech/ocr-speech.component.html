@@ -23,21 +23,42 @@
 
   <div *ngIf="texteExtrait" style="margin-top: 20px; padding: 10px; background: #f0f0f0;">
     <h3>Texte détecté :</h3>
-    <p>
-      <span *ngFor="let part of mots; let i = index">
-        <span *ngIf="part.estMot" class="mot-clickable" [class.mot-actif]="motActifIndex === i"
-              (click)="prononcerMot(part.texte, i)">{{ part.texte }}</span>
-        <span *ngIf="!part.estMot">{{ part.texte }}</span>
-      </span>
-    </p>
+
+    <div *ngIf="modeLecture === LectureMode.Full">
+      <p>
+        <span *ngFor="let part of mots; let i = index">
+          <span *ngIf="part.estMot" class="mot-clickable" [class.mot-actif]="motActifIndex === i"
+                (click)="prononcerMot(part.texte, i)">{{ part.texte }}</span>
+          <span *ngIf="!part.estMot">{{ part.texte }}</span>
+        </span>
+      </p>
+    </div>
+
+    <div *ngIf="modeLecture === LectureMode.Sentence && phrases.length">
+      <div *ngFor="let phrase of phrases; let i = index"
+           class="phrase-cliquable"
+           [class.phrase-activee]="phraseActiveeIndex === i"
+           (click)="prononcerPhrase(phrase, i)">
+        {{ phrase }}
+      </div>
+    </div>
   </div>
 
-  <div *ngIf="texteExtrait" style="margin-top: 12px;">
+  <div class="tab-bar" *ngIf="texteExtrait" style="margin-top: 16px;">
+    <button class="tab-btn" [class.tab-active]="modeLecture === LectureMode.Full" (click)="changerMode(LectureMode.Full)">Lire le texte</button>
+    <button class="tab-btn" [class.tab-active]="modeLecture === LectureMode.Sentence" (click)="changerMode(LectureMode.Sentence)">Par phrase</button>
+  </div>
+
+  <div *ngIf="modeLecture === LectureMode.Full && texteExtrait" style="margin-top: 12px;">
     <button *ngIf="!enCoursDeLecture" (click)="lireLeTexte()" [disabled]="enCoursDeChargement">
       Lire le texte
     </button>
     <button *ngIf="enCoursDeLecture" (click)="arreterLaLecture()">
       Arrêter
     </button>
+  </div>
+
+  <div *ngIf="modeLecture === LectureMode.Sentence && enCoursDeLecture" style="margin-top: 12px;">
+    <button (click)="arreterLaLecture()">Arrêter</button>
   </div>
 </div>

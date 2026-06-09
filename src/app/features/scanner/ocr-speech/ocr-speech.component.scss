@@ -9,3 +9,46 @@
 .mot-actif {
   background: #fff3cd;
 }
+
+.tab-bar {
+  display: flex;
+  justify-content: center;
+}
+
+.tab-btn {
+  padding: 6px 16px;
+  border: 1px solid #ccc;
+  background: #fff;
+  cursor: pointer;
+  font-size: 14px;
+
+  &:first-child {
+    border-radius: 4px 0 0 4px;
+  }
+
+  &:last-child {
+    border-radius: 0 4px 4px 0;
+    margin-left: -1px;
+  }
+}
+
+.tab-active {
+  background: #007bff;
+  color: #fff;
+  border-color: #007bff;
+}
+
+.phrase-cliquable {
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 4px;
+  margin-bottom: 4px;
+
+  &:hover {
+    background: #e0e0e0;
+  }
+}
+
+.phrase-activee {
+  background: #fff3cd;
+}
