@@ -36,6 +36,8 @@ export class OcrSpeechComponent implements OnInit, OnDestroy {
   phraseActiveeIndex: number | null = null;
   private destroy$ = new Subject<void>();
   motsSauvegardes: Set<string> = new Set();
+  private longPressTimer: any = null;
+  private longPressDetected: boolean = false;
 
   get mots(): { texte: string; estMot: boolean }[] {
     if (!this.texteExtrait) return [];
@@ -136,8 +138,34 @@ export class OcrSpeechComponent implements OnInit, OnDestroy {
     }, motPropre.length * DELAI_MOT_MS + DELAI_MOT_BASE_MS);
   }
 
-  async ajouterAuVocabulaire(mot: string) {
-    const motPropre = mot.replace(/[^a-zA-ZÀ-ÿ'-]/g, '');
+  onPointerDown(part: { texte: string }, index: number) {
+    this.longPressDetected = false;
+    this.longPressTimer = setTimeout(() => {
+      this.longPressDetected = true;
+      this.sauvegarderMot(part);
+    }, 500);
+  }
+
+  onPointerUp(part: { texte: string }, index: number) {
+    if (this.longPressTimer) {
+      clearTimeout(this.longPressTimer);
+      this.longPressTimer = null;
+    }
+    if (!this.longPressDetected) {
+      this.prononcerMot(part.texte, index);
+    }
+  }
+
+  onPointerCancel() {
+    if (this.longPressTimer) {
+      clearTimeout(this.longPressTimer);
+      this.longPressTimer = null;
+    }
+    this.longPressDetected = false;
+  }
+
+  private async sauvegarderMot(part: { texte: string }) {
+    const motPropre = part.texte.replace(/[^a-zA-ZÀ-ÿ'-]/g, '');
     if (!motPropre) return;
     await this.vocabulaireService.ajouterMot(motPropre);
     this.motsSauvegardes.add(motPropre.toLowerCase());

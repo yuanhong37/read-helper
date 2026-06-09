@@ -41,13 +41,12 @@
         </div>
         <p>
           <span *ngFor="let part of mots; let i = index">
-            <span *ngIf="part.estMot" class="mot-wrapper">
-              <span class="mot-clickable" [class.mot-actif]="motActifIndex === i"
-                (click)="prononcerMot(part.texte, i)">{{ part.texte }}</span>
-              <span class="mot-bookmark" (click)="ajouterAuVocabulaire(part.texte)">
-                {{ motsSauvegardes.has(part.texte.toLowerCase()) ? '★' : '☆' }}
-              </span>
-            </span>
+            <span *ngIf="part.estMot" class="mot-clickable"
+              [class.mot-actif]="motActifIndex === i"
+              [class.mot-sauvegarde]="motsSauvegardes.has(part.texte.toLowerCase())"
+              (pointerdown)="onPointerDown(part, i)"
+              (pointerup)="onPointerUp(part, i)"
+              (pointercancel)="onPointerCancel()">{{ part.texte }}</span>
             <span *ngIf="!part.estMot">{{ part.texte }}</span>
           </span>
         </p>
