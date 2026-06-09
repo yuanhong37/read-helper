@@ -4,7 +4,7 @@ import { HttpClientModule } from '@angular/common/http';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import { OcrSpeechComponent } from './features/scanner/ocr-speech/ocr-speech.component';
+import { OcrSpeechComponent } from './features/ocr-speech/ocr-speech.component';
 import { VocabulaireComponent } from './features/vocabulaire/vocabulaire.component';
 import { HistoriqueComponent } from './features/historique/historique.component';
 

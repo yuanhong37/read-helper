@@ -2,10 +2,10 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { SpeechSynthesisVoice } from '@capacitor-community/text-to-speech';
-import { CameraService } from '../../../core/services/camera.services';
-import { OcrSpeechService } from '../../../core/services/ocr-speech.service';
-import { TtsService } from '../../../core/services/tts.service';
-import { VocabulaireService } from '../../../core/services/vocabulaire.service';
+import { CameraService } from '../../core/services/camera.services';
+import { OcrSpeechService } from '../../core/services/ocr-speech.service';
+import { TtsService } from '../../core/services/tts.service';
+import { VocabulaireService } from '../../core/services/vocabulaire.service';
 
 enum LectureMode {
   Full = 'full',

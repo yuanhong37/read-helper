@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { OcrSpeechComponent } from './features/scanner/ocr-speech/ocr-speech.component';
+import { OcrSpeechComponent } from './features/ocr-speech/ocr-speech.component';
 import { VocabulaireComponent } from './features/vocabulaire/vocabulaire.component';
 import { HistoriqueComponent } from './features/historique/historique.component';
 
