@@ -10,6 +10,7 @@ import { Capacitor } from '@capacitor/core';
 })
 export class OcrSpeechService {
 
+  /** Extrait le texte d'une image via OCR natif (ML Kit) ou tesseract.js (web). */
   extraireTexte(imageSrc: string): Observable<string> {
     if (Capacitor.isNativePlatform()) {
       return defer(() => Ocr.process({ image: imageSrc })).pipe(

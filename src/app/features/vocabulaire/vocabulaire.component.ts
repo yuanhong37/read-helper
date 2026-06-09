@@ -25,11 +25,13 @@ export class VocabulaireComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  /** Formate une date ISO en JJ/MM/AAAA. */
   formaterDate(iso: string): string {
     const d = new Date(iso);
     return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
   }
 
+  /** Supprime un mot du vocabulaire. */
   supprimer(id: string) {
     this.vocabulaireService.supprimerMot(id).pipe(
       tap(() => this.mots = this.mots.filter(m => m.id !== id)),
@@ -37,6 +39,7 @@ export class VocabulaireComponent implements OnInit, OnDestroy {
     ).subscribe();
   }
 
+  /** Recharge la liste depuis le stockage. */
   recharger() {
     this.vocabulaireService.getMots().pipe(
       tap(mots => this.mots = mots),

@@ -8,6 +8,7 @@ import { TextToSpeech, SpeechSynthesisVoice } from '@capacitor-community/text-to
 })
 export class TtsService {
 
+  /** Récupère la liste des voix TTS disponibles (polls toutes les 1s jusqu'à obtenir une réponse). */
   getVoices$(): Observable<SpeechSynthesisVoice[]> {
     return timer(0, 1000).pipe(
       switchMap(() => from(TextToSpeech.getSupportedVoices()
@@ -33,10 +34,12 @@ export class TtsService {
     );
   }
 
+  /** Ouvre les paramètres d'installation TTS du système. */
   openInstall(): Observable<void> {
     return defer(() => TextToSpeech.openInstall());
   }
 
+  /** Prononce un texte avec la voix sélectionnée. Retourne un observable qui se complète à la fin de l'énoncé. */
   lireTexte(texte: string, voice?: number): Observable<void> {
     if (!texte || texte.trim() === '') return of(undefined);
 
@@ -53,6 +56,7 @@ export class TtsService {
     );
   }
 
+  /** Stoppe immédiatement la lecture en cours. */
   arreterLecture(): Observable<void> {
     return defer(() => TextToSpeech.stop());
   }

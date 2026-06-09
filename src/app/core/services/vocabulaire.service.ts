@@ -27,6 +27,7 @@ export class VocabulaireService {
 
   // Vocabulaire
 
+  /** Retourne la liste des mots sauvegardés. */
   getMots(): Observable<MotVocabulaire[]> {
     return defer(() =>
       Preferences.get({ key: STORAGE_KEY }).then(({ value }) =>
@@ -35,6 +36,7 @@ export class VocabulaireService {
     );
   }
 
+  /** Ajoute un mot au vocabulaire (ignoré si déjà présent). */
   ajouterMot(mot: string): Observable<void> {
     const motLower = mot.toLowerCase();
     return this.getMots().pipe(
@@ -52,6 +54,7 @@ export class VocabulaireService {
     );
   }
 
+  /** Supprime un mot du vocabulaire par son id. */
   supprimerMot(id: string): Observable<void> {
     return this.getMots().pipe(
       map(mots => mots.filter(m => m.id !== id)),
@@ -59,6 +62,7 @@ export class VocabulaireService {
     );
   }
 
+  /** Vérifie si un mot est déjà dans le vocabulaire. */
   contientMot(mot: string): Observable<boolean> {
     const motLower = mot.toLowerCase();
     return this.getMots().pipe(
@@ -68,6 +72,7 @@ export class VocabulaireService {
 
   // Historique
 
+  /** Retourne l'historique complet des scans OCR. */
   getHistorique(): Observable<TexteHistorique[]> {
     return defer(() =>
       Preferences.get({ key: HISTORIQUE_KEY }).then(({ value }) =>
@@ -76,6 +81,7 @@ export class VocabulaireService {
     );
   }
 
+  /** Enregistre un nouveau texte scanné dans l'historique. */
   ajouterTexteHistorique(texte: string): Observable<void> {
     return this.getHistorique().pipe(
       map(liste => {
@@ -92,6 +98,7 @@ export class VocabulaireService {
     );
   }
 
+  /** Supprime une entrée de l'historique par son id. */
   supprimerTexteHistorique(id: string): Observable<void> {
     return this.getHistorique().pipe(
       map(liste => liste.filter(e => e.id !== id)),
@@ -99,10 +106,12 @@ export class VocabulaireService {
     );
   }
 
+  /** Sauvegarde le texte actuellement affiché (restauré au prochain chargement). */
   sauvegarderTexteActif(texte: string): Observable<void> {
     return defer(() => Preferences.set({ key: TEXTE_ACTIF_KEY, value: texte }));
   }
 
+  /** Charge le texte actif sauvegardé (ou null si aucun). */
   chargerTexteActif(): Observable<string | null> {
     return defer(() =>
       Preferences.get({ key: TEXTE_ACTIF_KEY }).then(({ value }) => value ?? null),

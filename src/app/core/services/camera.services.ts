@@ -9,6 +9,7 @@ import { Capacitor } from '@capacitor/core';
 })
 export class CameraService {
 
+  /** Ouvre l'appareil photo (galerie sur web) et retourne l'image en DataUrl. */
   prendrePhoto(): Observable<string | undefined> {
     return defer(() =>
       Camera.getPhoto({
