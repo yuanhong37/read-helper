@@ -1,0 +1,21 @@
+<div class="vocabulaire-container">
+  <div class="vocabulaire-header">
+    <a routerLink="/" class="retour-link">&larr; Retour</a>
+    <h2>Mon vocabulaire</h2>
+    <span class="compteur" *ngIf="mots.length">{{ mots.length }} mot{{ mots.length > 1 ? 's' : '' }}</span>
+  </div>
+
+  <div *ngIf="mots.length === 0" class="vide">
+    Aucun mot enregistr&eacute;
+  </div>
+
+  <div class="liste-mots" *ngIf="mots.length">
+    <div class="mot-carte" *ngFor="let mot of mots">
+      <div class="mot-infos">
+        <span class="mot-texte">{{ mot.mot }}</span>
+        <span class="mot-date">{{ formaterDate(mot.dateCreation) }}</span>
+      </div>
+      <button class="btn-supprimer" (click)="supprimer(mot.id)" title="Supprimer">&times;</button>
+    </div>
+  </div>
+</div>

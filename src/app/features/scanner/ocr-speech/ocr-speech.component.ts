@@ -5,6 +5,7 @@ import { SpeechSynthesisVoice } from '@capacitor-community/text-to-speech';
 import { CameraService } from '../../../core/services/camera.services';
 import { OcrSpeechService } from '../../../core/services/ocr-speech.service';
 import { TtsService } from '../../../core/services/tts.service';
+import { VocabulaireService } from '../../../core/services/vocabulaire.service';
 
 enum LectureMode {
   Full = 'full',
@@ -34,6 +35,7 @@ export class OcrSpeechComponent implements OnInit, OnDestroy {
   modeLecture: LectureMode = LectureMode.Full;
   phraseActiveeIndex: number | null = null;
   private destroy$ = new Subject<void>();
+  motsSauvegardes: Set<string> = new Set();
 
   get mots(): { texte: string; estMot: boolean }[] {
     if (!this.texteExtrait) return [];
@@ -50,9 +52,18 @@ export class OcrSpeechComponent implements OnInit, OnDestroy {
     private cameraService: CameraService,
     private ocrService: OcrSpeechService,
     private ttsService: TtsService,
+    private vocabulaireService: VocabulaireService,
   ) {}
 
-  ngOnInit() {
+  async ngOnInit() {
+    const mots = await this.vocabulaireService.getMots();
+    this.motsSauvegardes = new Set(mots.map(m => m.mot.toLowerCase()));
+
+    const texteActif = await this.vocabulaireService.chargerTexteActif();
+    if (texteActif) {
+      this.texteExtrait = texteActif;
+    }
+
     this.ttsService.getVoices$().pipe(
       takeUntil(this.destroy$),
     ).subscribe(voices => {
@@ -88,7 +99,10 @@ export class OcrSpeechComponent implements OnInit, OnDestroy {
       this.imageAffichee = await this.cameraService.prendrePhoto();
       if (!this.imageAffichee) return;
 
-      this.texteExtrait = await this.ocrService.extraireTexte(this.imageAffichee);
+      const texte = await this.ocrService.extraireTexte(this.imageAffichee);
+      this.texteExtrait = texte;
+      await this.vocabulaireService.ajouterTexteHistorique(texte);
+      await this.vocabulaireService.sauvegarderTexteActif(texte);
 
     } catch (error) {
       console.error('Erreur lors du processus :', error);
@@ -120,6 +134,13 @@ export class OcrSpeechComponent implements OnInit, OnDestroy {
     setTimeout(() => {
       this.motActifIndex = null;
     }, motPropre.length * DELAI_MOT_MS + DELAI_MOT_BASE_MS);
+  }
+
+  async ajouterAuVocabulaire(mot: string) {
+    const motPropre = mot.replace(/[^a-zA-ZÀ-ÿ'-]/g, '');
+    if (!motPropre) return;
+    await this.vocabulaireService.ajouterMot(motPropre);
+    this.motsSauvegardes.add(motPropre.toLowerCase());
   }
 
   changerMode(mode: LectureMode) {

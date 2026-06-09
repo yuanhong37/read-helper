@@ -1,3 +1,7 @@
+.mot-wrapper {
+  white-space: nowrap;
+}
+
 .mot-clickable {
   cursor: pointer;
 
@@ -8,6 +12,18 @@
 
 .mot-actif {
   background: #fff3cd;
+}
+
+.mot-bookmark {
+  cursor: pointer;
+  font-size: 12px;
+  margin-left: 1px;
+  user-select: none;
+  color: #f0a030;
+
+  &:hover {
+    color: #e08000;
+  }
 }
 
 .tab-bar {
