@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
+import { Observable, defer, from } from 'rxjs';
+import { map, switchMap } from 'rxjs/operators';
 import { createWorker } from 'tesseract.js';
-import { Ocr, RecognitionResult } from '@jcesarmobile/capacitor-ocr';
+import { Ocr } from '@jcesarmobile/capacitor-ocr';
 import { Capacitor } from '@capacitor/core';
 
 @Injectable({
@@ -8,15 +10,22 @@ import { Capacitor } from '@capacitor/core';
 })
 export class OcrSpeechService {
 
-  async extraireTexte(imageSrc: string): Promise<string> {
+  extraireTexte(imageSrc: string): Observable<string> {
     if (Capacitor.isNativePlatform()) {
-      const result = await Ocr.process({ image: imageSrc });
-      return result.results.map(r => r.text).join('\n');
+      return defer(() => Ocr.process({ image: imageSrc })).pipe(
+        map(result => result.results.map(r => r.text).join('\n')),
+      );
     }
 
-    const worker = await createWorker('fra');
-    const ret = await worker.recognize(imageSrc);
-    await worker.terminate();
-    return ret.data.text;
+    return defer(() => createWorker('fra')).pipe(
+      switchMap(worker =>
+        from(worker.recognize(imageSrc)).pipe(
+          map((ret: any) => ret.data.text),
+          switchMap(text =>
+            from(worker.terminate()).pipe(map(() => text)),
+          ),
+        ),
+      ),
+    );
   }
 }

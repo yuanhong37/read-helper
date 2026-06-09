@@ -1,5 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
+import { Subject } from 'rxjs';
+import { map, tap, takeUntil } from 'rxjs/operators';
 import { VocabulaireService, TexteHistorique } from '../../core/services/vocabulaire.service';
 
 @Component({
@@ -7,17 +9,25 @@ import { VocabulaireService, TexteHistorique } from '../../core/services/vocabul
   templateUrl: './historique.component.html',
   styleUrls: ['./historique.component.scss']
 })
-export class HistoriqueComponent implements OnInit {
+export class HistoriqueComponent implements OnInit, OnDestroy {
   entrees: TexteHistorique[] = [];
+  private destroy$ = new Subject<void>();
 
   constructor(
     private vocabulaireService: VocabulaireService,
     private router: Router,
   ) {}
 
-  async ngOnInit() {
-    this.entrees = await this.vocabulaireService.getHistorique();
-    this.entrees.reverse();
+  ngOnInit() {
+    this.vocabulaireService.getHistorique().pipe(
+      map(liste => liste.reverse()),
+      takeUntil(this.destroy$),
+    ).subscribe(liste => this.entrees = liste);
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   formaterDate(iso: string): string {
@@ -25,13 +35,17 @@ export class HistoriqueComponent implements OnInit {
     return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
   }
 
-  async restaurer(entry: TexteHistorique) {
-    await this.vocabulaireService.sauvegarderTexteActif(entry.texte);
-    await this.router.navigate(['/']);
+  restaurer(entry: TexteHistorique) {
+    this.vocabulaireService.sauvegarderTexteActif(entry.texte).pipe(
+      tap(() => this.router.navigate(['/'])),
+      takeUntil(this.destroy$),
+    ).subscribe();
   }
 
-  async supprimer(id: string) {
-    await this.vocabulaireService.supprimerTexteHistorique(id);
-    this.entrees = this.entrees.filter(e => e.id !== id);
+  supprimer(id: string) {
+    this.vocabulaireService.supprimerTexteHistorique(id).pipe(
+      tap(() => this.entrees = this.entrees.filter(e => e.id !== id)),
+      takeUntil(this.destroy$),
+    ).subscribe();
   }
 }

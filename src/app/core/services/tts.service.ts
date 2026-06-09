@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, from, timer, of } from 'rxjs';
+import { Observable, from, timer, of, defer } from 'rxjs';
 import { map, switchMap, first, shareReplay, catchError } from 'rxjs/operators';
 import { TextToSpeech, SpeechSynthesisVoice } from '@capacitor-community/text-to-speech';
 
@@ -33,25 +33,27 @@ export class TtsService {
     );
   }
 
-  async openInstall(): Promise<void> {
-    await TextToSpeech.openInstall();
+  openInstall(): Observable<void> {
+    return defer(() => TextToSpeech.openInstall());
   }
 
-  async lireTexte(texte: string, voice?: number): Promise<void> {
-    if (!texte || texte.trim() === '') return;
+  lireTexte(texte: string, voice?: number): Observable<void> {
+    if (!texte || texte.trim() === '') return of(undefined);
 
-    await TextToSpeech.speak({
-      text: texte,
-      lang: 'fr-FR',
-      rate: 1.0,
-      pitch: 1.0,
-      volume: 1.0,
-      category: 'ambient',
-      voice,
-    });
+    return defer(() =>
+      TextToSpeech.speak({
+        text: texte,
+        lang: 'fr-FR',
+        rate: 1.0,
+        pitch: 1.0,
+        volume: 1.0,
+        category: 'ambient',
+        voice,
+      }),
+    );
   }
 
-  async arreterLecture(): Promise<void> {
-    await TextToSpeech.stop();
+  arreterLecture(): Observable<void> {
+    return defer(() => TextToSpeech.stop());
   }
 }
