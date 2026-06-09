@@ -1,4 +1,6 @@
 import { Injectable } from '@angular/core';
+import { Observable, from, timer, of } from 'rxjs';
+import { map, switchMap, first, shareReplay, catchError } from 'rxjs/operators';
 import { TextToSpeech, SpeechSynthesisVoice } from '@capacitor-community/text-to-speech';
 
 @Injectable({
@@ -6,9 +8,33 @@ import { TextToSpeech, SpeechSynthesisVoice } from '@capacitor-community/text-to
 })
 export class TtsService {
 
-  async getVoices(): Promise<SpeechSynthesisVoice[]> {
-    const { voices } = await TextToSpeech.getSupportedVoices();
-    return voices;
+  getVoices$(): Observable<SpeechSynthesisVoice[]> {
+    return timer(0, 1000).pipe(
+      switchMap(() => from(TextToSpeech.getSupportedVoices()
+        .catch(() => TextToSpeech.getSupportedLanguages())
+        .catch(() => ({ languages: [] })),
+      )),
+      map(r => {
+        const data = r as any;
+        if (data?.voices?.length) {
+          return data.voices as SpeechSynthesisVoice[];
+        }
+        const langs = data?.languages as string[] ?? [];
+        return langs.map(l => ({
+          name: l,
+          lang: l,
+          voiceURI: l,
+          default: false,
+          localService: true,
+        })) as SpeechSynthesisVoice[];
+      }),
+      first(voices => voices.length > 0),
+      shareReplay(1),
+    );
+  }
+
+  async openInstall(): Promise<void> {
+    await TextToSpeech.openInstall();
   }
 
   async lireTexte(texte: string, voice?: number): Promise<void> {

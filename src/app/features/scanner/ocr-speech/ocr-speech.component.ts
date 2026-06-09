@@ -1,4 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { SpeechSynthesisVoice } from '@capacitor-community/text-to-speech';
 import { CameraService } from '../../../core/services/camera.services';
 import { OcrSpeechService } from '../../../core/services/ocr-speech.service';
@@ -19,7 +21,7 @@ const DELAI_PHRASE_BASE_MS = 500;
   templateUrl: './ocr-speech.component.html',
   styleUrls: ['./ocr-speech.component.scss']
 })
-export class OcrSpeechComponent implements OnInit {
+export class OcrSpeechComponent implements OnInit, OnDestroy {
   LectureMode = LectureMode;
   imageAffichee: string | undefined = '';
   texteExtrait: string = '';
@@ -31,6 +33,7 @@ export class OcrSpeechComponent implements OnInit {
   motActifIndex: number | null = null;
   modeLecture: LectureMode = LectureMode.Full;
   phraseActiveeIndex: number | null = null;
+  private destroy$ = new Subject<void>();
 
   get mots(): { texte: string; estMot: boolean }[] {
     if (!this.texteExtrait) return [];
@@ -49,15 +52,24 @@ export class OcrSpeechComponent implements OnInit {
     private ttsService: TtsService,
   ) {}
 
-  async ngOnInit() {
-    this.toutesLesVoix = await this.ttsService.getVoices();
-    this.voixDisponibles = this.toutesLesVoix.filter(v =>
-      v.lang.toLowerCase().startsWith('fr')
-    );
-    if (this.voixDisponibles.length > 0) {
-      const firstIdx = this.toutesLesVoix.indexOf(this.voixDisponibles[0]);
-      this.voixSelectionnee = firstIdx >= 0 ? firstIdx : 0;
-    }
+  ngOnInit() {
+    this.ttsService.getVoices$().pipe(
+      takeUntil(this.destroy$),
+    ).subscribe(voices => {
+      this.toutesLesVoix = voices;
+      this.voixDisponibles = voices.filter(v =>
+        v.lang.toLowerCase().startsWith('fr') && (v.lang.toLowerCase() === 'fr-fr')
+      );
+      if (this.voixDisponibles.length > 0) {
+        const firstIdx = voices.indexOf(this.voixDisponibles[0]);
+        this.voixSelectionnee = firstIdx >= 0 ? firstIdx : 0;
+      }
+    });
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   surChangementVoix(event: Event) {

@@ -10,7 +10,7 @@
       Voix :
       <select (change)="surChangementVoix($event)">
         <option *ngFor="let v of voixDisponibles" [value]="toutesLesVoix.indexOf(v)" [selected]="toutesLesVoix.indexOf(v) === voixSelectionnee">
-          {{ v.name }} ({{ v.lang }}){{ v.default ? ' [Par défaut]' : '' }}
+          {{ v.voiceURI }} ({{ v.lang }}){{ v.default ? ' [Par défaut]' : '' }}
         </option>
       </select>
     </label>
