@@ -1,27 +1,62 @@
 # ReadHelper
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 16.2.16.
+Application Angular (Capacitor + Android) qui transforme une photo en texte par OCR, puis le lit à voix haute via la synthèse vocale.
 
-## Development server
+## Pipeline
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+1. **Photo** — `CameraService` capture une image via `Camera.getPhoto()`
+2. **OCR** — `OcrSpeechService` extrait le texte avec tesseract.js (langue `fra`)
+3. **Synthèse** — `TtsService` lit le texte avec `TextToSpeech.speak()` (voix française)
 
-## Code scaffolding
+L'utilisateur peut choisir la voix parmi les voix françaises disponibles.
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+## Prérequis
 
-## Build
+- Node.js
+- Angular CLI
+- Android Studio (pour le déploiement mobile)
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+## Installation
 
-## Running unit tests
+```bash
+npm install
+```
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+## Développement
 
-## Running end-to-end tests
+```bash
+ng serve          # Serveur local → http://localhost:4200
+ng build          # Build vers dist/read-helper
+ng test           # Tests unitaires (Karma + Jasmine)
+```
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
+## Déploiement Android
 
-## Further help
+```bash
+ng build && npx cap sync android
+npx cap open android    # Ouvrir dans Android Studio
+npx cap run android     # Lancer sur appareil/émulateur
+```
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+## Structure
+
+```
+src/
+├── app/
+│   ├── core/
+│   │   └── services/
+│   │       ├── camera.services.ts        # Capture photo (Capacitor)
+│   │       ├── ocr-speech.service.ts     # OCR avec tesseract.js
+│   │       ├── tts.service.ts            # Synthèse vocale (TextToSpeech)
+│   │       └── vocabulaire.service.ts    # Gestion du vocabulaire
+│   ├── features/
+│   │   ├── ocr-speech/                   # Scan, OCR et lecture
+│   │   ├── historique/                   # Historique des sessions
+│   │   └── vocabulaire/                  # Mots et expressions sauvegardés
+│   ├── app.component.ts                  # Composant racine
+│   ├── app.module.ts                     # Module Angular unique
+│   └── app-routing.module.ts             # Routage (lecture, historique, vocabulaire)
+├── index.html
+├── main.ts                               # Point d'entrée
+└── styles.scss                           # Styles globaux
+```
