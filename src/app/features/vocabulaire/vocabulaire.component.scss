@@ -49,13 +49,26 @@ h2 {
 }
 
 .mot-carte {
+  background: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  overflow: hidden;
+
+  &.mot-expanded {
+    border-color: #007bff;
+  }
+}
+
+.mot-ligne {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 10px 14px;
-  background: #f9f9f9;
-  border: 1px solid #e0e0e0;
-  border-radius: 6px;
+  cursor: pointer;
+
+  &:hover {
+    background: #f0f0f0;
+  }
 }
 
 .mot-infos {
@@ -75,6 +88,17 @@ h2 {
   margin-top: 2px;
 }
 
+.mot-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.indicateur-def {
+  color: #28a745;
+  font-size: 14px;
+}
+
 .btn-supprimer {
   background: none;
   border: none;
@@ -86,5 +110,131 @@ h2 {
 
   &:hover {
     color: #ff0000;
+  }
+}
+
+.definition-panel {
+  padding: 0 14px 14px;
+  border-top: 1px solid #e0e0e0;
+  background: #fff;
+}
+
+.def-loading {
+  padding: 16px 0;
+  color: #888;
+  font-style: italic;
+  font-size: 14px;
+  text-align: center;
+}
+
+.def-erreur {
+  padding: 16px 0;
+  color: #cc0000;
+  font-size: 14px;
+  text-align: center;
+}
+
+.def-contenu {
+  padding: 12px 0 4px;
+}
+
+.def-prononciation {
+  margin-bottom: 12px;
+  padding: 6px 10px;
+  background: #f0f7ff;
+  border-radius: 6px;
+}
+
+.prononciation-ipa {
+  font-size: 15px;
+  font-weight: 600;
+  color: #0056b3;
+  font-family: 'Courier New', monospace;
+
+  & + & {
+    margin-left: 10px;
+
+    &::before {
+      content: '•';
+      margin-right: 10px;
+      color: #999;
+    }
+  }
+}
+
+.def-nature {
+  margin-bottom: 12px;
+}
+
+.nature-titre {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  background: #6c757d;
+  padding: 2px 10px;
+  border-radius: 10px;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.nature-defs {
+  margin: 0;
+  padding-left: 20px;
+
+  li {
+    font-size: 14px;
+    color: #333;
+    line-height: 1.5;
+    margin-bottom: 4px;
+  }
+}
+
+.def-synonymes {
+  margin-bottom: 12px;
+}
+
+.synonymes-titre {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  background: #28a745;
+  padding: 2px 10px;
+  border-radius: 10px;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.synonymes-liste {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.synonyme-mot {
+  display: inline-block;
+  font-size: 13px;
+  color: #155724;
+  background: #d4edda;
+  padding: 2px 10px;
+  border-radius: 12px;
+
+  &:hover {
+    background: #c3e6cb;
+  }
+}
+
+.def-lien {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 13px;
+  color: #007bff;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
   }
 }
