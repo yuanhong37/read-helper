@@ -10,12 +10,50 @@
   </div>
 
   <div class="liste-mots" *ngIf="mots.length">
-    <div class="mot-carte" *ngFor="let mot of mots">
-      <div class="mot-infos">
-        <span class="mot-texte">{{ mot.mot }}</span>
-        <span class="mot-date">{{ formaterDate(mot.dateCreation) }}</span>
+    <div class="mot-carte" *ngFor="let mot of mots"
+      [class.mot-expanded]="motExpanded === mot.id">
+      <div class="mot-ligne" (click)="toggleDefinition(mot.id, mot.mot)">
+        <div class="mot-infos">
+          <span class="mot-texte">{{ mot.mot }}</span>
+          <span class="mot-date">{{ formaterDate(mot.dateCreation) }}</span>
+        </div>
+        <div class="mot-actions">
+          <span class="indicateur-def" *ngIf="definitions.has(mot.mot.toLowerCase())"
+            title="D&eacute;finition disponible">&diams;</span>
+          <button class="btn-supprimer" (click)="supprimer(mot.id); $event.stopPropagation()" title="Supprimer">&times;</button>
+        </div>
       </div>
-      <button class="btn-supprimer" (click)="supprimer(mot.id)" title="Supprimer">&times;</button>
+
+      <div class="definition-panel" *ngIf="motExpanded === mot.id">
+        <div class="def-loading" *ngIf="chargementDef.get(mot.mot.toLowerCase())">
+          Recherche de la d&eacute;finition...
+        </div>
+        <div class="def-erreur" *ngIf="erreurDef.has(mot.mot.toLowerCase()) && !chargementDef.get(mot.mot.toLowerCase())">
+          {{ erreurDef.get(mot.mot.toLowerCase()) }}
+        </div>
+        <div class="def-contenu" *ngIf="definitions.has(mot.mot.toLowerCase()) && !chargementDef.get(mot.mot.toLowerCase())">
+          <ng-container *ngIf="definitions.get(mot.mot.toLowerCase()) as def">
+            <div class="def-prononciation" *ngIf="def.prononciation && def.prononciation.length > 0">
+              <span class="prononciation-ipa" *ngFor="let ipa of def.prononciation">{{ ipa }}</span>
+            </div>
+            <div class="def-nature" *ngFor="let nature of def.natures">
+              <span class="nature-titre">{{ nature.nature }}</span>
+              <ul class="nature-defs">
+                <li *ngFor="let sens of nature.definitions; let i = index">{{ sens }}</li>
+              </ul>
+            </div>
+            <div class="def-synonymes" *ngIf="def.synonymes && def.synonymes.length > 0">
+              <span class="synonymes-titre">Synonymes</span>
+              <div class="synonymes-liste">
+                <span class="synonyme-mot" *ngFor="let syn of def.synonymes">{{ syn }}</span>
+              </div>
+            </div>
+            <a class="def-lien" [href]="def.url" target="_blank" rel="noopener">
+              Voir sur le Wiktionnaire &rarr;
+            </a>
+          </ng-container>
+        </div>
+      </div>
     </div>
   </div>
 </div>
