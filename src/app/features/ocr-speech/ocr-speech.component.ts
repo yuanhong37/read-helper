@@ -1,16 +1,12 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Subject, of, timer, Observable } from 'rxjs';
-import { filter, map, switchMap, tap, takeUntil, catchError, finalize } from 'rxjs/operators';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { SpeechSynthesisVoice } from '@capacitor-community/text-to-speech';
+import { Observable, Subject, of, timer } from 'rxjs';
+import { catchError, filter, finalize, map, switchMap, takeUntil, tap } from 'rxjs/operators';
+import { LectureMode } from '../../core/model/lecture-mode.enum';
 import { CameraService } from '../../core/services/camera.services';
 import { OcrSpeechService } from '../../core/services/ocr-speech.service';
 import { TtsService } from '../../core/services/tts.service';
 import { VocabulaireService } from '../../core/services/vocabulaire.service';
-
-enum LectureMode {
-  Full = 'full',
-  Sentence = 'sentence',
-}
 
 const DELAI_MOT_MS = 80;
 const DELAI_MOT_BASE_MS = 300;
@@ -25,28 +21,27 @@ const DELAI_PHRASE_BASE_MS = 500;
 export class OcrSpeechComponent implements OnInit, OnDestroy {
   LectureMode = LectureMode;
   imageAffichee: string | undefined = '';
-  texteExtrait: string = '';
-  enCoursDeChargement: boolean = false;
-  enCoursDeLecture: boolean = false;
+  texteExtrait = '';
+  enCoursDeChargement = false;
+  enCoursDeLecture = false;
   toutesLesVoix: SpeechSynthesisVoice[] = [];
   voixDisponibles: SpeechSynthesisVoice[] = [];
-  voixSelectionnee: number = 0;
+  voixSelectionnee = 0;
   motActifIndex: number | null = null;
   modeLecture: LectureMode = LectureMode.Full;
   phraseActiveeIndex: number | null = null;
-  private destroy$ = new Subject<void>();
   motsSauvegardes: Set<string> = new Set();
-  private longPressTimer: any = null;
-  private longPressDetected: boolean = false;
 
-  /** Découpe le texte en tokens (mot / séparateur) pour l'affichage cliquable. */
+  private destroy$ = new Subject<void>();
+  private longPressTimer: any = null;
+  private longPressDetected = false;
+
   get mots(): { texte: string; estMot: boolean }[] {
     if (!this.texteExtrait) return [];
     const parties = this.texteExtrait.split(/(\s+)/);
     return parties.map(p => ({ texte: p, estMot: /[a-zA-ZÀ-ÿ]/.test(p) }));
   }
 
-  /** Découpe le texte en phrases (séparateur . ! ?) pour le mode "Par phrase". */
   get phrases(): string[] {
     if (!this.texteExtrait) return [];
     return this.texteExtrait.split(/(?<=[.!?])\s+/).filter(p => p.trim().length > 0);
@@ -59,7 +54,6 @@ export class OcrSpeechComponent implements OnInit, OnDestroy {
     private vocabulaireService: VocabulaireService,
   ) {}
 
-  /** Charge le vocabulaire, le texte actif et la liste des voix au démarrage. */
   ngOnInit() {
     this.vocabulaireService.getMots().pipe(takeUntil(this.destroy$)).subscribe(mots => {
       this.motsSauvegardes = new Set(mots.map(m => m.mot.toLowerCase()));
@@ -83,19 +77,16 @@ export class OcrSpeechComponent implements OnInit, OnDestroy {
     });
   }
 
-  /** Nettoie les souscriptions pour éviter les fuites mémoire. */
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
   }
 
-  /** Met à jour la voix sélectionnée dans le dropdown. */
   surChangementVoix(event: Event) {
     const select = event.target as HTMLSelectElement;
     this.voixSelectionnee = parseInt(select.value, 10);
   }
 
-  /** Prend une photo, exécute l'OCR, puis sauvegarde le texte dans l'historique et comme texte actif. */
   lancerLeScan() {
     this.enCoursDeChargement = true;
     this.enCoursDeLecture = false;
@@ -125,7 +116,6 @@ export class OcrSpeechComponent implements OnInit, OnDestroy {
     ).subscribe();
   }
 
-  /** Lit l'intégralité du texte extrait avec la voix sélectionnée. */
   lireLeTexte() {
     this.enCoursDeLecture = true;
     this.ttsService.lireTexte(this.texteExtrait, this.voixSelectionnee).pipe(
@@ -133,7 +123,6 @@ export class OcrSpeechComponent implements OnInit, OnDestroy {
     ).subscribe();
   }
 
-  /** Stoppe la lecture TTS et réinitialise les index de surbrillance. */
   arreterLaLecture() {
     this.enCoursDeLecture = false;
     this.motActifIndex = null;
@@ -143,7 +132,6 @@ export class OcrSpeechComponent implements OnInit, OnDestroy {
     ).subscribe();
   }
 
-  /** Prononce un mot spécifique (appelé par clic court) et le surligne temporairement. */
   prononcerMot(mot: string, index: number) {
     const motPropre = mot.replace(/[^a-zA-ZÀ-ÿ'-]/g, '');
     const delai = motPropre.length * DELAI_MOT_MS + DELAI_MOT_BASE_MS;
@@ -160,7 +148,6 @@ export class OcrSpeechComponent implements OnInit, OnDestroy {
     ).subscribe();
   }
 
-  /** Déclenche un timer de 500ms — si le doigt reste appuyé, on sauvegarde le mot. */
   onPointerDown(part: { texte: string }, index: number) {
     this.longPressDetected = false;
     this.longPressTimer = setTimeout(() => {
@@ -169,7 +156,6 @@ export class OcrSpeechComponent implements OnInit, OnDestroy {
     }, 500);
   }
 
-  /** Relâchement : si le long-press n'a pas eu lieu, on prononce le mot (clic court). */
   onPointerUp(part: { texte: string }, index: number) {
     if (this.longPressTimer) {
       clearTimeout(this.longPressTimer);
@@ -180,7 +166,6 @@ export class OcrSpeechComponent implements OnInit, OnDestroy {
     }
   }
 
-  /** Annulation du geste (le doigt quitte la zone) → nettoie le timer. */
   onPointerCancel() {
     if (this.longPressTimer) {
       clearTimeout(this.longPressTimer);
@@ -189,17 +174,6 @@ export class OcrSpeechComponent implements OnInit, OnDestroy {
     this.longPressDetected = false;
   }
 
-  /** Sauvegarde un mot dans le vocabulaire via le service. */
-  private sauvegarderMot(part: { texte: string }) {
-    const motPropre = part.texte.replace(/[^a-zA-ZÀ-ÿ'-]/g, '');
-    if (!motPropre) return;
-    this.vocabulaireService.ajouterMot(motPropre).pipe(
-      tap(() => this.motsSauvegardes.add(motPropre.toLowerCase())),
-      takeUntil(this.destroy$),
-    ).subscribe();
-  }
-
-  /** Bascule entre les modes "Texte complet" et "Par phrase". */
   changerMode(mode: LectureMode) {
     this.modeLecture = mode;
     this.motActifIndex = null;
@@ -209,7 +183,6 @@ export class OcrSpeechComponent implements OnInit, OnDestroy {
     ).subscribe();
   }
 
-  /** Prononce une phrase spécifique en mode "Par phrase" avec surbrillance temporaire. */
   prononcerPhrase(phrase: string, index: number) {
     const phrasePropre = phrase.trim();
     const etaitEnLecture = this.enCoursDeLecture;
@@ -227,6 +200,15 @@ export class OcrSpeechComponent implements OnInit, OnDestroy {
       switchMap(() => phrasePropre ? this.ttsService.lireTexte(phrasePropre, this.voixSelectionnee) : of(undefined)),
       switchMap(() => timer(phrasePropre.length * DELAI_PHRASE_MS + DELAI_PHRASE_BASE_MS)),
       tap(() => { this.phraseActiveeIndex = null; }),
+      takeUntil(this.destroy$),
+    ).subscribe();
+  }
+
+  private sauvegarderMot(part: { texte: string }) {
+    const motPropre = part.texte.replace(/[^a-zA-ZÀ-ÿ'-]/g, '');
+    if (!motPropre) return;
+    this.vocabulaireService.ajouterMot(motPropre).pipe(
+      tap(() => this.motsSauvegardes.add(motPropre.toLowerCase())),
       takeUntil(this.destroy$),
     ).subscribe();
   }

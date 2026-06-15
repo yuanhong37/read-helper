@@ -1,23 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, defer, from, of } from 'rxjs';
-import { map, switchMap, catchError } from 'rxjs/operators';
 import { Preferences } from '@capacitor/preferences';
-
-export interface DefinitionNature {
-  nature: string;
-  definitions: string[];
-}
-
-export interface Definition {
-  mot: string;
-  natures: DefinitionNature[];
-  prononciation: string[];
-  synonymes: string[];
-  dateRecherche: string;
-  url: string;
-  redirectVers?: string;
-}
+import { Observable, defer, of } from 'rxjs';
+import { catchError, map, switchMap } from 'rxjs/operators';
+import { Definition, DefinitionNature } from '../model/definition.model';
 
 interface CacheData {
   [mot: string]: Definition;
@@ -50,9 +36,13 @@ export class DictionnaireService {
     return defer(() => Preferences.remove({ key: CACHE_KEY }));
   }
 
+  // Utilitaires
+
   private nettoyerMot(mot: string): string {
     return mot.replace(/^[ldsnmstcj]'\s*/i, '').trim();
   }
+
+  // Cache
 
   private getFromCache(mot: string): Observable<Definition | null> {
     return defer(() =>
@@ -73,6 +63,8 @@ export class DictionnaireService {
       }),
     );
   }
+
+  // API Wiktionnaire
 
   private fetchFromWiktionary(mot: string): Observable<Definition> {
     const url = this.apiUrl(mot);
@@ -107,6 +99,8 @@ export class DictionnaireService {
   private apiUrl(mot: string): string {
     return `https://fr.wiktionary.org/w/api.php?action=parse&page=${encodeURIComponent(mot)}&prop=text&format=json&origin=*`;
   }
+
+  // Parsing HTML
 
   private parseDefinitionHtml(html: string, mot: string): Definition {
     const doc = new DOMParser().parseFromString(html, 'text/html');

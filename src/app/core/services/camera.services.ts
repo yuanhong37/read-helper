@@ -1,15 +1,13 @@
 import { Injectable } from '@angular/core';
-import { Observable, defer } from 'rxjs';
-import { map } from 'rxjs/operators';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Capacitor } from '@capacitor/core';
+import { Observable, defer } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CameraService {
-
-  /** Ouvre l'appareil photo (galerie sur web) et retourne l'image en DataUrl. */
   prendrePhoto(): Observable<string | undefined> {
     return defer(() =>
       Camera.getPhoto({

@@ -1,8 +1,9 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
-import { map, tap, takeUntil } from 'rxjs/operators';
-import { VocabulaireService, TexteHistorique } from '../../core/services/vocabulaire.service';
+import { map, takeUntil, tap } from 'rxjs/operators';
+import { TexteHistorique } from '../../core/model/vocabulaire.model';
+import { VocabulaireService } from '../../core/services/vocabulaire.service';
 
 @Component({
   selector: 'app-historique',
@@ -11,6 +12,7 @@ import { VocabulaireService, TexteHistorique } from '../../core/services/vocabul
 })
 export class HistoriqueComponent implements OnInit, OnDestroy {
   entrees: TexteHistorique[] = [];
+
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -30,13 +32,11 @@ export class HistoriqueComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  /** Formate une date ISO en JJ/MM/AAAA. */
   formaterDate(iso: string): string {
     const d = new Date(iso);
     return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
   }
 
-  /** Sauvegarde le texte comme texte actif et redirige vers la page d'accueil. */
   restaurer(entry: TexteHistorique) {
     this.vocabulaireService.sauvegarderTexteActif(entry.texte).pipe(
       tap(() => this.router.navigate(['/'])),
@@ -44,7 +44,6 @@ export class HistoriqueComponent implements OnInit, OnDestroy {
     ).subscribe();
   }
 
-  /** Supprime une entrée de l'historique. */
   supprimer(id: string) {
     this.vocabulaireService.supprimerTexteHistorique(id).pipe(
       tap(() => this.entrees = this.entrees.filter(e => e.id !== id)),

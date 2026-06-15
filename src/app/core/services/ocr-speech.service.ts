@@ -1,16 +1,14 @@
 import { Injectable } from '@angular/core';
+import { Capacitor } from '@capacitor/core';
+import { Ocr } from '@jcesarmobile/capacitor-ocr';
+import { createWorker } from 'tesseract.js';
 import { Observable, defer, from } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
-import { createWorker } from 'tesseract.js';
-import { Ocr } from '@jcesarmobile/capacitor-ocr';
-import { Capacitor } from '@capacitor/core';
 
 @Injectable({
   providedIn: 'root'
 })
 export class OcrSpeechService {
-
-  /** Extrait le texte d'une image via OCR natif (ML Kit) ou tesseract.js (web). */
   extraireTexte(imageSrc: string): Observable<string> {
     if (Capacitor.isNativePlatform()) {
       return defer(() => Ocr.process({ image: imageSrc })).pipe(

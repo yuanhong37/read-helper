@@ -1,8 +1,10 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subject } from 'rxjs';
 import { takeUntil, tap } from 'rxjs/operators';
-import { VocabulaireService, MotVocabulaire } from '../../core/services/vocabulaire.service';
-import { DictionnaireService, Definition } from '../../core/services/dictionnaire.service';
+import { Definition } from '../../core/model/definition.model';
+import { MotVocabulaire } from '../../core/model/vocabulaire.model';
+import { DictionnaireService } from '../../core/services/dictionnaire.service';
+import { VocabulaireService } from '../../core/services/vocabulaire.service';
 
 @Component({
   selector: 'app-vocabulaire',
@@ -15,6 +17,7 @@ export class VocabulaireComponent implements OnInit, OnDestroy {
   chargementDef: Map<string, boolean> = new Map();
   erreurDef: Map<string, string> = new Map();
   motExpanded: string | null = null;
+
   private destroy$ = new Subject<void>();
 
   constructor(
