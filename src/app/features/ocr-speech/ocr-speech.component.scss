@@ -69,6 +69,52 @@
   padding: 20px;
 }
 
+.crop-container {
+  margin-top: 16px;
+}
+
+.canvas-wrapper {
+  max-width: 100%;
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  border: 1px solid #777;
+}
+
+.crop-canvas {
+  cursor: crosshair;
+}
+
+.crop-indice {
+  font-size: 13px;
+  color: #888;
+  margin: 8px 0;
+}
+
+.crop-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.btn-primary {
+  background: #007bff;
+  color: #fff;
+  border: none;
+  padding: 6px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+
+  &:hover {
+    background: #0056b3;
+  }
+
+  &:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+  }
+}
+
 // Mobile container adjustments
 @media (max-width: 600px) {
   .container {
