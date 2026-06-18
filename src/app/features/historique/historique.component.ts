@@ -29,10 +29,8 @@ export class HistoriqueComponent {
   }
 
   restaurer(entry: TexteHistorique) {
-    this.vocabulaireService.sauvegarderTexteActif(entry.texte).pipe(
-      tap(() => this.router.navigate(['/'])),
-      takeUntilDestroyed(this.destroyRef),
-    ).subscribe();
+    this.vocabulaireService.sauvegarderTexteActif(entry.texte).subscribe();
+    this.router.navigate(['/']);
   }
 
   supprimer(id: string) {
