@@ -1,7 +1,8 @@
-import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, ViewChild, inject, DestroyRef } from '@angular/core';
 import { SpeechSynthesisVoice } from '@capacitor-community/text-to-speech';
-import { Observable, Subject, of, timer } from 'rxjs';
-import { catchError, filter, finalize, map, switchMap, takeUntil, tap } from 'rxjs/operators';
+import { of, timer } from 'rxjs';
+import { catchError, filter, finalize, map, switchMap, tap } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { LectureMode } from '../../core/model/lecture-mode.enum';
 import { CameraService } from '../../core/services/camera.services';
 import { OcrSpeechService } from '../../core/services/ocr-speech.service';
@@ -18,11 +19,11 @@ type InteractionMode = 'none' | 'drawing' | 'moving'
   | 'resize-top' | 'resize-bottom' | 'resize-left' | 'resize-right';
 
 @Component({
-  selector: 'app-ocr-speech',
-  templateUrl: './ocr-speech.component.html',
-  styleUrls: ['./ocr-speech.component.scss']
+    selector: 'app-ocr-speech',
+    templateUrl: './ocr-speech.component.html',
+    styleUrls: ['./ocr-speech.component.scss'],
 })
-export class OcrSpeechComponent implements OnInit, OnDestroy {
+export class OcrSpeechComponent {
   LectureMode = LectureMode;
   imageAffichee: string | undefined = '';
   imageOriginale: string | undefined = '';
@@ -38,7 +39,6 @@ export class OcrSpeechComponent implements OnInit, OnDestroy {
   phraseActiveeIndex: number | null = null;
   motsSauvegardes: Set<string> = new Set();
 
-  private destroy$ = new Subject<void>();
   private longPressTimer: any = null;
   private longPressDetected = false;
   private interactionMode: InteractionMode = 'none';
@@ -49,6 +49,31 @@ export class OcrSpeechComponent implements OnInit, OnDestroy {
 
   @ViewChild('cropCanvas', { static: false }) canvasRef!: ElementRef<HTMLCanvasElement>;
 
+  private destroyRef = inject(DestroyRef);
+  private cameraService = inject(CameraService);
+  private ocrService = inject(OcrSpeechService);
+  private ttsService = inject(TtsService);
+  private vocabulaireService = inject(VocabulaireService);
+
+  private motsSub = this.vocabulaireService.getMots().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(mots => {
+    this.motsSauvegardes = new Set(mots.map(m => m.mot.toLowerCase()));
+  });
+
+  private texteSub = this.vocabulaireService.chargerTexteActif().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(texte => {
+    if (texte) this.texteExtrait = texte;
+  });
+
+  private voixSub = this.ttsService.getVoices$().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(voices => {
+    this.toutesLesVoix = voices;
+    this.voixDisponibles = voices.filter(v =>
+      v.lang.toLowerCase().startsWith('fr') && (v.lang.toLowerCase() === 'fr-fr')
+    );
+    if (this.voixDisponibles.length > 0) {
+      const firstIdx = voices.indexOf(this.voixDisponibles[0]);
+      this.voixSelectionnee = firstIdx >= 0 ? firstIdx : 0;
+    }
+  });
+
   get mots(): { texte: string; estMot: boolean }[] {
     if (!this.texteExtrait) return [];
     const parties = this.texteExtrait.split(/(\s+)/);
@@ -58,33 +83,6 @@ export class OcrSpeechComponent implements OnInit, OnDestroy {
   get phrases(): string[] {
     if (!this.texteExtrait) return [];
     return this.texteExtrait.split(/(?<=[.!?])\s+/).filter(p => p.trim().length > 0);
-  }
-
-  constructor(
-    private cameraService: CameraService,
-    private ocrService: OcrSpeechService,
-    private ttsService: TtsService,
-    private vocabulaireService: VocabulaireService,
-  ) {}
-
-  ngOnInit() {
-    this.ttsService.getVoices$().pipe(
-      takeUntil(this.destroy$),
-    ).subscribe(voices => {
-      this.toutesLesVoix = voices;
-      this.voixDisponibles = voices.filter(v =>
-        v.lang.toLowerCase().startsWith('fr') && (v.lang.toLowerCase() === 'fr-fr')
-      );
-      if (this.voixDisponibles.length > 0) {
-        const firstIdx = voices.indexOf(this.voixDisponibles[0]);
-        this.voixSelectionnee = firstIdx >= 0 ? firstIdx : 0;
-      }
-    });
-  }
-
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   surChangementVoix(event: Event) {
@@ -116,14 +114,14 @@ export class OcrSpeechComponent implements OnInit, OnDestroy {
         setTimeout(() => this.initialiserCanvas(), 0);
         return of(null);
       }),
-      takeUntil(this.destroy$),
+      takeUntilDestroyed(this.destroyRef),
     ).subscribe();
   }
 
   lireLeTexte() {
     this.enCoursDeLecture = true;
     this.ttsService.lireTexte(this.texteExtrait, this.voixSelectionnee).pipe(
-      takeUntil(this.destroy$),
+      takeUntilDestroyed(this.destroyRef),
     ).subscribe();
   }
 
@@ -132,7 +130,7 @@ export class OcrSpeechComponent implements OnInit, OnDestroy {
     this.motActifIndex = null;
     this.phraseActiveeIndex = null;
     this.ttsService.arreterLecture().pipe(
-      takeUntil(this.destroy$),
+      takeUntilDestroyed(this.destroyRef),
     ).subscribe();
   }
 
@@ -380,7 +378,7 @@ export class OcrSpeechComponent implements OnInit, OnDestroy {
       switchMap(() => motPropre ? this.ttsService.lireTexte(motPropre, this.voixSelectionnee) : of(undefined)),
       switchMap(() => timer(delai)),
       tap(() => { this.motActifIndex = null; }),
-      takeUntil(this.destroy$),
+      takeUntilDestroyed(this.destroyRef),
     ).subscribe();
   }
 
@@ -415,7 +413,7 @@ export class OcrSpeechComponent implements OnInit, OnDestroy {
     this.motActifIndex = null;
     this.phraseActiveeIndex = null;
     this.ttsService.arreterLecture().pipe(
-      takeUntil(this.destroy$),
+      takeUntilDestroyed(this.destroyRef),
     ).subscribe();
   }
 
@@ -436,7 +434,7 @@ export class OcrSpeechComponent implements OnInit, OnDestroy {
       switchMap(() => phrasePropre ? this.ttsService.lireTexte(phrasePropre, this.voixSelectionnee) : of(undefined)),
       switchMap(() => timer(phrasePropre.length * DELAI_PHRASE_MS + DELAI_PHRASE_BASE_MS)),
       tap(() => { this.phraseActiveeIndex = null; }),
-      takeUntil(this.destroy$),
+      takeUntilDestroyed(this.destroyRef),
     ).subscribe();
   }
 
@@ -445,7 +443,7 @@ export class OcrSpeechComponent implements OnInit, OnDestroy {
     if (!motPropre) return;
     this.vocabulaireService.ajouterMot(motPropre).pipe(
       tap(() => this.motsSauvegardes.add(motPropre.toLowerCase())),
-      takeUntil(this.destroy$),
+      takeUntilDestroyed(this.destroyRef),
     ).subscribe();
   }
 
@@ -465,7 +463,7 @@ export class OcrSpeechComponent implements OnInit, OnDestroy {
         return of(undefined);
       }),
       finalize(() => this.enCoursDeChargement = false),
-      takeUntil(this.destroy$),
+      takeUntilDestroyed(this.destroyRef),
     ).subscribe();
   }
 

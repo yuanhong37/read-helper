@@ -1,36 +1,27 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
-import { Subject } from 'rxjs';
-import { map, takeUntil, tap } from 'rxjs/operators';
+import { Component, inject, DestroyRef } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
+import { map, tap } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TexteHistorique } from '../../core/model/vocabulaire.model';
 import { VocabulaireService } from '../../core/services/vocabulaire.service';
 
 @Component({
-  selector: 'app-historique',
-  templateUrl: './historique.component.html',
-  styleUrls: ['./historique.component.scss']
+    selector: 'app-historique',
+    templateUrl: './historique.component.html',
+    styleUrls: ['./historique.component.scss'],
+    imports: [RouterLink],
 })
-export class HistoriqueComponent implements OnInit, OnDestroy {
+export class HistoriqueComponent {
   entrees: TexteHistorique[] = [];
 
-  private destroy$ = new Subject<void>();
+  private destroyRef = inject(DestroyRef);
+  private vocabulaireService = inject(VocabulaireService);
+  private router = inject(Router);
 
-  constructor(
-    private vocabulaireService: VocabulaireService,
-    private router: Router,
-  ) {}
-
-  ngOnInit() {
-    this.vocabulaireService.getHistorique().pipe(
-      map(liste => liste.reverse()),
-      takeUntil(this.destroy$),
-    ).subscribe(liste => this.entrees = liste);
-  }
-
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
+  private historiqueSub = this.vocabulaireService.getHistorique().pipe(
+    map(liste => liste.reverse()),
+    takeUntilDestroyed(this.destroyRef),
+  ).subscribe(liste => this.entrees = liste);
 
   formaterDate(iso: string): string {
     const d = new Date(iso);
@@ -40,14 +31,14 @@ export class HistoriqueComponent implements OnInit, OnDestroy {
   restaurer(entry: TexteHistorique) {
     this.vocabulaireService.sauvegarderTexteActif(entry.texte).pipe(
       tap(() => this.router.navigate(['/'])),
-      takeUntil(this.destroy$),
+      takeUntilDestroyed(this.destroyRef),
     ).subscribe();
   }
 
   supprimer(id: string) {
     this.vocabulaireService.supprimerTexteHistorique(id).pipe(
       tap(() => this.entrees = this.entrees.filter(e => e.id !== id)),
-      takeUntil(this.destroy$),
+      takeUntilDestroyed(this.destroyRef),
     ).subscribe();
   }
 }

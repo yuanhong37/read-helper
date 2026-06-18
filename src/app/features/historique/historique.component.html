@@ -2,23 +2,31 @@
   <div class="historique-header">
     <a routerLink="/" class="retour-link">&larr; Retour</a>
     <h2>Historique des scans</h2>
-    <span class="compteur" *ngIf="entrees.length">{{ entrees.length }} scan{{ entrees.length > 1 ? 's' : '' }}</span>
+    @if (entrees.length) {
+      <span class="compteur">{{ entrees.length }} scan{{ entrees.length > 1 ? 's' : '' }}</span>
+    }
   </div>
 
-  <div *ngIf="entrees.length === 0" class="vide">
-    Aucun scan enregistr&eacute;
-  </div>
-
-  <div class="liste" *ngIf="entrees.length">
-    <div class="carte" *ngFor="let entree of entrees">
-      <div class="carte-infos">
-        <span class="carte-date">{{ formaterDate(entree.dateCreation) }}</span>
-        <span class="carte-texte">{{ entree.apercu }}</span>
-      </div>
-      <div class="carte-actions">
-        <button class="btn-restaurer" (click)="restaurer(entree)">Restaurer</button>
-        <button class="btn-supprimer" (click)="supprimer(entree.id)" title="Supprimer">&times;</button>
-      </div>
+  @if (entrees.length === 0) {
+    <div class="vide">
+      Aucun scan enregistr&eacute;
     </div>
-  </div>
+  }
+
+  @if (entrees.length) {
+    <div class="liste">
+      @for (entree of entrees; track entree.id) {
+        <div class="carte">
+          <div class="carte-infos">
+            <span class="carte-date">{{ formaterDate(entree.dateCreation) }}</span>
+            <span class="carte-texte">{{ entree.apercu }}</span>
+          </div>
+          <div class="carte-actions">
+            <button class="btn-restaurer" (click)="restaurer(entree)">Restaurer</button>
+            <button class="btn-supprimer" (click)="supprimer(entree.id)" title="Supprimer">&times;</button>
+          </div>
+        </div>
+      }
+    </div>
+  }
 </div>

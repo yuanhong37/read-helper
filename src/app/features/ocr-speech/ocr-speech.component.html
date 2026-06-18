@@ -6,72 +6,95 @@
       {{ enCoursDeChargement ? 'Traitement en cours...' : 'Prendre une photo et lire' }}
     </button>
 
-    <div *ngIf="voixDisponibles.length" style="margin-top: 12px;">
-      <label>
-        Voix :
-        <select (change)="surChangementVoix($event)">
-          <option *ngFor="let v of voixDisponibles" [value]="toutesLesVoix.indexOf(v)"
-            [selected]="toutesLesVoix.indexOf(v) === voixSelectionnee">
-            {{ v.voiceURI }} ({{ v.lang }}){{ v.default ? ' [Par défaut]' : '' }}
-          </option>
-        </select>
-      </label>
-    </div>
+    @if (voixDisponibles.length) {
+      <div style="margin-top: 12px;">
+        <label>
+          Voix :
+          <select (change)="surChangementVoix($event)">
+            @for (v of voixDisponibles; track v.voiceURI) {
+              <option [value]="toutesLesVoix.indexOf(v)"
+                [selected]="toutesLesVoix.indexOf(v) === voixSelectionnee">
+                {{ v.voiceURI }} ({{ v.lang }}){{ v.default ? ' [Par défaut]' : '' }}
+              </option>
+            }
+          </select>
+        </label>
+      </div>
+    }
 
-    <div *ngIf="modeImage === 'recadrage'" class="crop-container">
-      <div class="canvas-wrapper" (click)="onWrapperClick($event)">
-        <canvas #cropCanvas
-          class="crop-canvas"
-          (mousedown)="onCanvasMouseDown($event)"
-          (mousemove)="onCanvasMouseMove($event)"
-          (mouseup)="onCanvasMouseUp($event)"
-          (mouseleave)="onCanvasMouseUp($event)"
-          (touchstart)="onCanvasTouchStart($event)"
-          (touchmove)="onCanvasTouchMove($event)"
-          (touchend)="onCanvasTouchEnd($event)"></canvas>
-      </div>
-      <p class="crop-indice">Cliquez-glissez pour dessiner une zone, glissez la zone pour la déplacer, ou tirez les coins pour la redimensionner.</p>
-      <div class="crop-actions">
-        <button (click)="passerRecadrage()" [disabled]="enCoursDeChargement">Utiliser l'image complète</button>
-        <button (click)="confirmerRecadrage()" class="btn-primary" [disabled]="enCoursDeChargement">Confirmer le recadrage</button>
-      </div>
-    </div>
-
-    <div *ngIf="texteExtrait"  style="margin-top: 20px; padding: 10px; background: #f0f0f0; text-align: left; border-radius: 8px; margin-left: auto; margin-right: auto;">
-      <div class="tab-bar" *ngIf="texteExtrait" style="margin-top: 16px;">
-        <button class="tab-btn" [class.tab-active]="modeLecture === LectureMode.Full"
-          (click)="changerMode(LectureMode.Full)">Texte complet</button>
-        <button class="tab-btn" [class.tab-active]="modeLecture === LectureMode.Sentence"
-          (click)="changerMode(LectureMode.Sentence)">Par phrase</button>
-      </div>
-      <div *ngIf="modeLecture === LectureMode.Full" style="margin-top: 12px;">
-        <div class="text-center">
-          <button *ngIf="!enCoursDeLecture" (click)="lireLeTexte()" [disabled]="enCoursDeChargement">
-            Lire le texte
-          </button>
-          <button *ngIf="enCoursDeLecture" (click)="arreterLaLecture()">
-            Arrêter
-          </button>
+    @if (modeImage === 'recadrage') {
+      <div class="crop-container">
+        <div class="canvas-wrapper" (click)="onWrapperClick($event)">
+          <canvas #cropCanvas
+            class="crop-canvas"
+            (mousedown)="onCanvasMouseDown($event)"
+            (mousemove)="onCanvasMouseMove($event)"
+            (mouseup)="onCanvasMouseUp($event)"
+            (mouseleave)="onCanvasMouseUp($event)"
+            (touchstart)="onCanvasTouchStart($event)"
+            (touchmove)="onCanvasTouchMove($event)"
+            (touchend)="onCanvasTouchEnd($event)"></canvas>
         </div>
-        <p>
-          <span *ngFor="let part of mots; let i = index">
-            <span *ngIf="part.estMot" class="mot-clickable"
-              [class.mot-actif]="motActifIndex === i"
-              [class.mot-sauvegarde]="motsSauvegardes.has(part.texte.toLowerCase())"
-              (pointerdown)="onPointerDown(part, i)"
-              (pointerup)="onPointerUp(part, i)"
-              (pointercancel)="onPointerCancel()">{{ part.texte }}</span>
-            <span *ngIf="!part.estMot">{{ part.texte }}</span>
-          </span>
-        </p>
-      </div>
-
-      <div *ngIf="modeLecture === LectureMode.Sentence && phrases.length" style="margin-top: 12px;">
-        <div *ngFor="let phrase of phrases; let i = index" class="phrase-cliquable"
-          [class.phrase-activee]="phraseActiveeIndex === i" (click)="prononcerPhrase(phrase, i)">
-          {{ phrase }}
+        <p class="crop-indice">Cliquez-glissez pour dessiner une zone, glissez la zone pour la déplacer, ou tirez les coins pour la redimensionner.</p>
+        <div class="crop-actions">
+          <button (click)="passerRecadrage()" [disabled]="enCoursDeChargement">Utiliser l'image complète</button>
+          <button (click)="confirmerRecadrage()" class="btn-primary" [disabled]="enCoursDeChargement">Confirmer le recadrage</button>
         </div>
       </div>
-    </div>
+    }
+
+    @if (texteExtrait) {
+      <div style="margin-top: 20px; padding: 10px; background: #f0f0f0; text-align: left; border-radius: 8px; margin-left: auto; margin-right: auto;">
+        <div class="tab-bar" style="margin-top: 16px;">
+          <button class="tab-btn" [class.tab-active]="modeLecture === LectureMode.Full"
+            (click)="changerMode(LectureMode.Full)">Texte complet</button>
+          <button class="tab-btn" [class.tab-active]="modeLecture === LectureMode.Sentence"
+            (click)="changerMode(LectureMode.Sentence)">Par phrase</button>
+        </div>
+
+        @if (modeLecture === LectureMode.Full) {
+          <div style="margin-top: 12px;">
+            <div class="text-center">
+              @if (!enCoursDeLecture) {
+                <button (click)="lireLeTexte()" [disabled]="enCoursDeChargement">
+                  Lire le texte
+                </button>
+              }
+              @if (enCoursDeLecture) {
+                <button (click)="arreterLaLecture()">
+                  Arrêter
+                </button>
+              }
+            </div>
+            <p>
+              @for (part of mots; track i; let i = $index) {
+                @if (part.estMot) {
+                  <span class="mot-clickable"
+                    [class.mot-actif]="motActifIndex === i"
+                    [class.mot-sauvegarde]="motsSauvegardes.has(part.texte.toLowerCase())"
+                    (pointerdown)="onPointerDown(part, i)"
+                    (pointerup)="onPointerUp(part, i)"
+                    (pointercancel)="onPointerCancel()">{{ part.texte }}</span>
+                }
+                @if (!part.estMot) {
+                  <span>{{ part.texte }}</span>
+                }
+              }
+            </p>
+          </div>
+        }
+
+        @if (modeLecture === LectureMode.Sentence && phrases.length) {
+          <div style="margin-top: 12px;">
+            @for (phrase of phrases; track i; let i = $index) {
+              <div class="phrase-cliquable"
+                [class.phrase-activee]="phraseActiveeIndex === i" (click)="prononcerPhrase(phrase, i)">
+                {{ phrase }}
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
   </div>
 </div>
