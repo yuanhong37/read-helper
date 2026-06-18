@@ -8,7 +8,8 @@
     "watch": "ng build --watch --configuration development",
     "test": "jest --passWithNoTests",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "lint": "ng lint"
   },
   "private": true,
   "dependencies": {
@@ -39,9 +40,12 @@
     "@angular/compiler-cli": "^19.2.25",
     "@types/jest": "^30.0.0",
     "@types/node": "^18.19.130",
+    "angular-eslint": "19.8.1",
+    "eslint": "^9.28.0",
     "jest": "^30.4.2",
     "jest-environment-jsdom": "^30.4.1",
     "jest-preset-angular": "^17.0.0",
-    "typescript": "~5.8.3"
+    "typescript": "~5.8.3",
+    "typescript-eslint": "8.33.1"
   }
 }
