@@ -18,6 +18,10 @@ export class DictionnaireService {
 
   constructor(private http: HttpClient) {}
 
+  nettoyerMot(mot: string): string {
+    return mot.replace(/^[ldsnmstcj]'\s*/i, '').trim();
+  }
+
   getDefinition(mot: string): Observable<Definition | null> {
     const motPropre = this.nettoyerMot(mot).toLowerCase();
     if (!motPropre) return of(null);
@@ -34,12 +38,6 @@ export class DictionnaireService {
 
   viderCache(): Observable<void> {
     return defer(() => Preferences.remove({ key: CACHE_KEY }));
-  }
-
-  // Utilitaires
-
-  private nettoyerMot(mot: string): string {
-    return mot.replace(/^[ldsnmstcj]'\s*/i, '').trim();
   }
 
   // Cache
@@ -97,7 +95,7 @@ export class DictionnaireService {
   }
 
   private apiUrl(mot: string): string {
-    return `https://fr.wiktionary.org/w/api.php?action=parse&page=${encodeURIComponent(mot)}&prop=text&format=json&origin=*`;
+    return `https://fr.wiktionary.org/w/api.php?action=parse&page=${encodeURIComponent(mot)}&prop=text&format=json&origin=*&redirects=1`;
   }
 
   // Parsing HTML
@@ -123,7 +121,7 @@ export class DictionnaireService {
         const firstLi = ol.querySelector(':scope > li:first-child');
         if (firstLi) {
           const text = firstLi.textContent?.trim() || '';
-          const isRedir = /^(?:Pluriel|Féminin singulier|Masculin pluriel|Féminin pluriel)\s+de\s+/i.test(text);
+          const isRedir = /^(?:Pluriel|Féminin(?:\s+singulier)?|Masculin(?:\s+pluriel|\s+singulier)?|Forme|Participe passé|Participe présent)\s+de\s+|^(?:Première|Deuxième|Troisième)\s+personne\s+du\s+(?:singulier|pluriel)\s+de\s+/i.test(text);
           if (isRedir) {
             const link = firstLi.querySelector('a');
             if (link) {
@@ -133,21 +131,42 @@ export class DictionnaireService {
         }
       }
 
-      const definitions: string[] = [];
+      const defsSet = new Set<string>();
       ol.querySelectorAll(':scope > li').forEach(li => {
         li.querySelectorAll('ul').forEach(u => u.remove());
         const text = li.textContent?.trim();
         if (text) {
-          definitions.push(text.replace(/\s+/g, ' ').trim());
+          defsSet.add(text.replace(/\s+/g, ' ').trim());
         }
       });
 
+      const definitions = Array.from(defsSet);
+
       if (definitions.length > 0) {
-        natures.push({ nature, definitions });
+        const existante = natures.find(n => n.nature === nature);
+        if (existante) {
+          for (const d of definitions) {
+            if (!existante.definitions.includes(d)) {
+              existante.definitions.push(d);
+            }
+          }
+        } else {
+          natures.push({ nature, definitions });
+        }
       }
     });
 
-    if (natures.length === 0) {
+    if (!redirectVers) {
+      const redirectEl = doc.querySelector('ul.redirectText');
+      if (redirectEl) {
+        const link = redirectEl.querySelector('a');
+        if (link) {
+          redirectVers = link.getAttribute('title') || link.textContent?.trim() || undefined;
+        }
+      }
+    }
+
+    if (natures.length === 0 && !redirectVers) {
       const fallback: string[] = [];
       doc.querySelectorAll('.mw-parser-output > ol > li').forEach(li => {
         const text = li.textContent?.trim();

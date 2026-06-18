@@ -1,0 +1,352 @@
+.ecouter-container {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.ecouter-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.retour-link {
+  text-decoration: none;
+  color: #007bff;
+  font-size: 14px;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+h2 {
+  margin: 0;
+  font-size: 20px;
+  flex: 1;
+}
+
+/* ---- Accueil ---- */
+
+.ecran-accueil {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+}
+
+.accueil-contenu {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.accueil-icone {
+  font-size: 56px;
+  color: #007bff;
+}
+
+.accueil-texte {
+  font-size: 18px;
+  color: #333;
+  margin: 0;
+  font-weight: 600;
+}
+
+.message-vide {
+  text-align: center;
+  color: #999;
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+.lien-ajout {
+  color: #007bff;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.controle-voix {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  max-width: 320px;
+}
+
+.voix-label {
+  font-size: 13px;
+  color: #888;
+  font-weight: 600;
+}
+
+.select-voix {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 14px;
+  background: #fff;
+  cursor: pointer;
+
+  &:focus {
+    border-color: #007bff;
+    outline: none;
+  }
+}
+
+.boucle-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #555;
+  cursor: pointer;
+
+  input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+  }
+}
+
+.btn-commencer {
+  padding: 12px 36px;
+  background: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    background: #0069d9;
+  }
+}
+
+/* ---- Lecture ---- */
+
+.ecran-lecture {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.progression-mot {
+  font-size: 14px;
+  color: #888;
+  font-weight: 600;
+}
+
+.carte-lecture {
+  width: 100%;
+  max-width: 420px;
+  min-height: 200px;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.lecture-mot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.mot-titre {
+  font-size: 32px;
+  font-weight: 700;
+  color: #333;
+  text-align: center;
+}
+
+.btn-prononcer {
+  background: #f0f7ff;
+  border: 1px solid #cce5ff;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  font-size: 18px;
+  cursor: pointer;
+  color: #007bff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    background: #cce5ff;
+  }
+}
+
+.lecture-def {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.def-nature-label {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  background: #6c757d;
+  padding: 2px 12px;
+  border-radius: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.def-texte {
+  font-size: 16px;
+  color: #333;
+  line-height: 1.6;
+}
+
+.barre-progression {
+  width: 100%;
+  max-width: 420px;
+  height: 6px;
+  background: #f0f0f0;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.barre-remplie {
+  height: 100%;
+  background: #007bff;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.compteur-items {
+  font-size: 12px;
+  color: #bbb;
+}
+
+.controles-lecture {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-ctrl {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-pause {
+  background: #ffc107;
+  color: #856404;
+
+  &:hover {
+    background: #e0a800;
+  }
+}
+
+.btn-reprendre {
+  background: #28a745;
+  color: #fff;
+
+  &:hover {
+    background: #218838;
+  }
+}
+
+.btn-stop {
+  background: #dc3545;
+  color: #fff;
+
+  &:hover {
+    background: #c82333;
+  }
+}
+
+.boucle-lecture {
+  margin-top: 4px;
+}
+
+/* ---- Fin ---- */
+
+.ecran-fin {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  text-align: center;
+  gap: 12px;
+}
+
+.fin-icone {
+  font-size: 56px;
+  color: #28a745;
+}
+
+.ecran-fin h3 {
+  margin: 0;
+  font-size: 22px;
+  color: #333;
+}
+
+.ecran-fin p {
+  margin: 0;
+  font-size: 15px;
+  color: #888;
+}
+
+.actions-fin {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.btn-rejouer {
+  padding: 10px 24px;
+  background: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    background: #0069d9;
+  }
+}
+
+.btn-retour {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 24px;
+  background: #f0f0f0;
+  color: #555;
+  border-radius: 8px;
+  font-size: 14px;
+  text-decoration: none;
+
+  &:hover {
+    background: #e0e0e0;
+  }
+}

@@ -5,6 +5,29 @@
     @if (mots.length) {
       <span class="compteur">{{ mots.length }} mot{{ mots.length > 1 ? 's' : '' }}</span>
     }
+    @if (mots.length) {
+      <a routerLink="/flashcard" class="btn-flashcard-header">Flashcard</a>
+      <a routerLink="/ecouter" class="btn-ecouter-header">&Eacute;couter</a>
+    }
+  </div>
+
+  <!-- Feedback -->
+  @if (feedbackMessage) {
+    <div class="feedback">{{ feedbackMessage }}</div>
+  }
+
+  <!-- Formulaire d'ajout manuel -->
+  <div class="ajout-form">
+    <input
+      class="ajout-input"
+      [(ngModel)]="nouveauMot"
+      (keyup.enter)="ajouterMotManuellement()"
+      placeholder="Ajouter un mot..."
+      autocomplete="off"
+    />
+    <button class="btn-ajouter" (click)="ajouterMotManuellement()" [disabled]="!nouveauMot.trim()">
+      Ajouter
+    </button>
   </div>
 
   @if (mots.length === 0) {
@@ -14,38 +37,77 @@
   }
 
   @if (mots.length) {
+    <!-- Contrôles de tri -->
+    <div class="controles-tri">
+      <button
+        class="btn-tri"
+        [class.btn-tri-actif]="sortBy === 'date'"
+        (click)="changerTri('date')"
+      >
+        Date {{ sortBy === 'date' ? (sortAsc ? '&uarr;' : '&darr;') : '' }}
+      </button>
+      <button
+        class="btn-tri"
+        [class.btn-tri-actif]="sortBy === 'alpha'"
+        (click)="changerTri('alpha')"
+      >
+        A-Z {{ sortBy === 'alpha' ? (sortAsc ? '&uarr;' : '&darr;') : '' }}
+      </button>
+    </div>
+
     <div class="liste-mots">
-      @for (mot of mots; track mot.id) {
+      @for (mot of motsPagines; track mot.id) {
         <div class="mot-carte"
-          [class.mot-expanded]="motExpanded === mot.id">
-          <div class="mot-ligne" (click)="toggleDefinition(mot.id, mot.mot)">
-            <div class="mot-infos">
-              <span class="mot-texte">{{ mot.mot }}</span>
-              <span class="mot-date">{{ formaterDate(mot.dateCreation) }}</span>
+          [class.mot-expanded]="motExpanded === mot.id"
+          [class.mot-edition]="motEdition?.id === mot.id">
+          @if (motEdition?.id === mot.id) {
+            <!-- Mode édition -->
+            <div class="mot-ligne mot-ligne-edition">
+              <input
+                class="edit-input"
+                [(ngModel)]="motEdition!.mot"
+                (keyup.enter)="sauvegarderEdition()"
+                (click)="$event.stopPropagation()"
+                autofocus
+              />
+              <div class="mot-actions">
+                <button class="btn-valider" (click)="sauvegarderEdition(); $event.stopPropagation()" title="Valider">&#10003;</button>
+                <button class="btn-annuler" (click)="annulerEdition(); $event.stopPropagation()" title="Annuler">&times;</button>
+              </div>
             </div>
-            <div class="mot-actions">
-              @if (definitions.has(mot.mot.toLowerCase())) {
-                <span class="indicateur-def"
-                  title="D&eacute;finition disponible">&diams;</span>
-              }
-              <button class="btn-supprimer" (click)="supprimer(mot.id); $event.stopPropagation()" title="Supprimer">&times;</button>
+          } @else {
+            <!-- Mode normal -->
+            <div class="mot-ligne" (click)="toggleDefinition(mot.id, mot.mot)">
+              <div class="mot-infos">
+                <span class="mot-texte">{{ mot.mot }}</span>
+                <span class="mot-date">{{ formaterDate(mot.dateCreation) }}</span>
+              </div>
+              <div class="mot-actions">
+                <button class="btn-prononcer" (click)="prononcerMot(mot.mot); $event.stopPropagation()" title="Prononcer">&#9654;</button>
+                <button class="btn-editer" (click)="demarrerEdition(mot.id, mot.mot); $event.stopPropagation()" title="Modifier">&#9998;</button>
+                @if (definitions.has(nettoyerMot(mot.mot))) {
+                  <span class="indicateur-def"
+                    title="D&eacute;finition disponible">&diams;</span>
+                }
+                <button class="btn-supprimer" (click)="supprimer(mot.id); $event.stopPropagation()" title="Supprimer">&times;</button>
+              </div>
             </div>
-          </div>
+          }
 
           @if (motExpanded === mot.id) {
             <div class="definition-panel">
-              @if (chargementDef.get(mot.mot.toLowerCase())) {
+              @if (chargementDef.get(nettoyerMot(mot.mot))) {
                 <div class="def-loading">
                   Recherche de la d&eacute;finition...
                 </div>
               }
-              @if (erreurDef.has(mot.mot.toLowerCase()) && !chargementDef.get(mot.mot.toLowerCase())) {
+              @if (erreurDef.has(nettoyerMot(mot.mot)) && !chargementDef.get(nettoyerMot(mot.mot))) {
                 <div class="def-erreur">
-                  {{ erreurDef.get(mot.mot.toLowerCase()) }}
+                  {{ erreurDef.get(nettoyerMot(mot.mot)) }}
                 </div>
               }
-              @if (definitions.has(mot.mot.toLowerCase()) && !chargementDef.get(mot.mot.toLowerCase())) {
-                @let def = definitions.get(mot.mot.toLowerCase())!;
+              @if (definitions.has(nettoyerMot(mot.mot)) && !chargementDef.get(nettoyerMot(mot.mot))) {
+                @let def = definitions.get(nettoyerMot(mot.mot))!;
                 <div class="def-contenu">
                   @if (def.prononciation.length) {
                     <div class="def-prononciation">
@@ -59,7 +121,10 @@
                       <span class="nature-titre">{{ nature.nature }}</span>
                       <ul class="nature-defs">
                         @for (sens of nature.definitions; track i; let i = $index) {
-                          <li>{{ sens }}</li>
+                          <li>
+                            <span class="def-texte">{{ sens }}</span>
+                            <button class="btn-def-prononcer" (click)="prononcerMot(sens); $event.stopPropagation()" title="Prononcer cette définition">&#9654;</button>
+                          </li>
                         }
                       </ul>
                     </div>
@@ -69,7 +134,10 @@
                       <span class="synonymes-titre">Synonymes</span>
                       <div class="synonymes-liste">
                         @for (syn of def.synonymes; track syn) {
-                          <span class="synonyme-mot">{{ syn }}</span>
+                          <span class="synonyme-mot">
+                            {{ syn }}
+                            <button class="btn-syn-prononcer" (click)="prononcerMot(syn); $event.stopPropagation()" title="Prononcer ce synonyme">&#9654;</button>
+                          </span>
                         }
                       </div>
                     </div>
@@ -84,5 +152,22 @@
         </div>
       }
     </div>
+
+    <!-- Pagination -->
+    @if (totalPages > 1) {
+      <div class="pagination">
+        <button class="btn-page" [disabled]="page <= 1" (click)="changerPage(1)" title="Premi&egrave;re page">&laquo;</button>
+        <button class="btn-page" [disabled]="page <= 1" (click)="changerPage(page - 1)" title="Pr&eacute;c&eacute;dente">&lsaquo;</button>
+        @for (p of paginationRange; track p) {
+          <button
+            class="btn-page"
+            [class.btn-page-actif]="p === page"
+            (click)="changerPage(p)"
+          >{{ p }}</button>
+        }
+        <button class="btn-page" [disabled]="page >= totalPages" (click)="changerPage(page + 1)" title="Suivante">&rsaquo;</button>
+        <button class="btn-page" [disabled]="page >= totalPages" (click)="changerPage(totalPages)" title="Derni&egrave;re page">&raquo;</button>
+      </div>
+    }
   }
 </div>

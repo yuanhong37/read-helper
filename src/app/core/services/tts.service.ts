@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
+import { Preferences } from '@capacitor/preferences';
 import { TextToSpeech, SpeechSynthesisVoice } from '@capacitor-community/text-to-speech';
 import { Observable, defer, from, of, timer } from 'rxjs';
-import { catchError, first, map, shareReplay, switchMap } from 'rxjs/operators';
+import { catchError, first, map, shareReplay, switchMap, tap } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -54,5 +55,19 @@ export class TtsService {
 
   arreterLecture(): Observable<void> {
     return defer(() => TextToSpeech.stop());
+  }
+
+  getSavedVoice$(): Observable<number> {
+    return defer(() =>
+      Preferences.get({ key: 'voix-selectionnee' }).then(({ value }) =>
+        value ? parseInt(value, 10) : 0,
+      ),
+    );
+  }
+
+  saveVoice(index: number): Observable<void> {
+    return defer(() =>
+      Preferences.set({ key: 'voix-selectionnee', value: String(index) }),
+    );
   }
 }
