@@ -18,15 +18,29 @@
       </label>
     </div>
 
-    <!-- <div *ngIf="imageAffichee" style="margin-top: 20px;">
-    <h3>Image capturée :</h3>
-    <img [src]="imageAffichee" style="max-width: 80%; max-height: 200px; border-radius: 8px;" />
-  </div> -->
+    <div *ngIf="modeImage === 'recadrage'" class="crop-container">
+      <div class="canvas-wrapper" (click)="onWrapperClick($event)">
+        <canvas #cropCanvas
+          class="crop-canvas"
+          (mousedown)="onCanvasMouseDown($event)"
+          (mousemove)="onCanvasMouseMove($event)"
+          (mouseup)="onCanvasMouseUp($event)"
+          (mouseleave)="onCanvasMouseUp($event)"
+          (touchstart)="onCanvasTouchStart($event)"
+          (touchmove)="onCanvasTouchMove($event)"
+          (touchend)="onCanvasTouchEnd($event)"></canvas>
+      </div>
+      <p class="crop-indice">Cliquez-glissez pour dessiner une zone, glissez la zone pour la déplacer, ou tirez les coins pour la redimensionner.</p>
+      <div class="crop-actions">
+        <button (click)="passerRecadrage()" [disabled]="enCoursDeChargement">Utiliser l'image complète</button>
+        <button (click)="confirmerRecadrage()" class="btn-primary" [disabled]="enCoursDeChargement">Confirmer le recadrage</button>
+      </div>
+    </div>
 
     <div *ngIf="texteExtrait"  style="margin-top: 20px; padding: 10px; background: #f0f0f0; text-align: left; border-radius: 8px; margin-left: auto; margin-right: auto;">
       <div class="tab-bar" *ngIf="texteExtrait" style="margin-top: 16px;">
         <button class="tab-btn" [class.tab-active]="modeLecture === LectureMode.Full"
-          (click)="changerMode(LectureMode.Full)">Lire le texte</button>
+          (click)="changerMode(LectureMode.Full)">Texte complet</button>
         <button class="tab-btn" [class.tab-active]="modeLecture === LectureMode.Sentence"
           (click)="changerMode(LectureMode.Sentence)">Par phrase</button>
       </div>
