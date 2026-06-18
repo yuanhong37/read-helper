@@ -95,7 +95,7 @@ export class DictionnaireService {
   }
 
   private apiUrl(mot: string): string {
-    return `https://fr.wiktionary.org/w/api.php?action=parse&page=${encodeURIComponent(mot)}&prop=text&format=json&origin=*`;
+    return `https://fr.wiktionary.org/w/api.php?action=parse&page=${encodeURIComponent(mot)}&prop=text&format=json&origin=*&redirects=1`;
   }
 
   // Parsing HTML
@@ -121,7 +121,7 @@ export class DictionnaireService {
         const firstLi = ol.querySelector(':scope > li:first-child');
         if (firstLi) {
           const text = firstLi.textContent?.trim() || '';
-          const isRedir = /^(?:Pluriel|Féminin singulier|Masculin pluriel|Féminin pluriel)\s+de\s+/i.test(text);
+          const isRedir = /^(?:Pluriel|Féminin(?:\s+singulier)?|Masculin(?:\s+pluriel|\s+singulier)?|Forme|Participe passé|Participe présent)\s+de\s+|^(?:Première|Deuxième|Troisième)\s+personne\s+du\s+(?:singulier|pluriel)\s+de\s+/i.test(text);
           if (isRedir) {
             const link = firstLi.querySelector('a');
             if (link) {
@@ -156,7 +156,17 @@ export class DictionnaireService {
       }
     });
 
-    if (natures.length === 0) {
+    if (!redirectVers) {
+      const redirectEl = doc.querySelector('ul.redirectText');
+      if (redirectEl) {
+        const link = redirectEl.querySelector('a');
+        if (link) {
+          redirectVers = link.getAttribute('title') || link.textContent?.trim() || undefined;
+        }
+      }
+    }
+
+    if (natures.length === 0 && !redirectVers) {
       const fallback: string[] = [];
       doc.querySelectorAll('.mw-parser-output > ol > li').forEach(li => {
         const text = li.textContent?.trim();

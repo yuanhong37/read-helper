@@ -5,6 +5,9 @@
     @if (mots.length) {
       <span class="compteur">{{ mots.length }} mot{{ mots.length > 1 ? 's' : '' }}</span>
     }
+    @if (mots.length) {
+      <a routerLink="/flashcard" class="btn-flashcard-header">Flashcard</a>
+    }
   </div>
 
   <!-- Feedback -->

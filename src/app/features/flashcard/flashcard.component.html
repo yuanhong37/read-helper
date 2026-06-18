@@ -1,0 +1,128 @@
+<div class="flashcard-container">
+  <div class="flashcard-header">
+    <a routerLink="/vocabulaire" class="retour-link">&larr; Vocabulaire</a>
+    <h2>Mode Flashcard</h2>
+  </div>
+
+  <!-- Écran d'accueil -->
+  @if (!enJeu && !partieTerminee) {
+    <div class="ecran-accueil">
+      @if (nbMotsDisponibles === 0) {
+        <p class="message-vide">
+          Aucun mot dans le vocabulaire.<br/>
+          <a routerLink="/vocabulaire" class="lien-ajout">Ajoutez-en depuis la page Vocabulaire</a>
+        </p>
+      } @else {
+        <div class="accueil-contenu">
+          <div class="icone-flashcard">&#9879;</div>
+          <p class="accueil-texte">
+            {{ nbMotsDisponibles }} mot{{ nbMotsDisponibles > 1 ? 's' : '' }} disponible{{ nbMotsDisponibles > 1 ? 's' : '' }}
+          </p>
+          <p class="accueil-sous-texte">
+            {{ nbMotsDisponibles >= 10 ? '10 mots' : nbMotsDisponibles + ' mot' + (nbMotsDisponibles > 1 ? 's' : '') }} par partie &middot; Retournez la carte pour voir la d&eacute;finition
+          </p>
+          <button class="btn-commencer" (click)="commencerPartie()">
+            Commencer la partie
+          </button>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Écran de fin -->
+  @if (partieTerminee) {
+    <div class="ecran-fin">
+      <div class="icone-fin">&#9733;</div>
+      <h3>Partie termin&eacute;e !</h3>
+      <p>{{ totalCartes }} mot{{ totalCartes > 1 ? 's' : '' }} revu{{ totalCartes > 1 ? 's' : '' }}</p>
+      <div class="actions-fin">
+        <button class="btn-rejouer" (click)="rejouer()">Rejouer</button>
+        <a routerLink="/vocabulaire" class="btn-retour-liste">Retour au vocabulaire</a>
+      </div>
+    </div>
+  }
+
+  <!-- Écran de jeu -->
+  @if (enJeu && !partieTerminee) {
+    <div class="ecran-jeu">
+      <div class="compteur-cartes">
+        Carte {{ indexCourant + 1 }} / {{ totalCartes }}
+      </div>
+
+      <div class="carte-wrapper" (click)="tournerCarte()">
+        <div class="carte-interieur" [class.carte-flippee]="flipActive">
+          <!-- Face mot -->
+          <div class="carte-face carte-face-avant">
+            <div class="face-contenu">
+              @if (carteCourante) {
+                <span class="face-mot">{{ carteCourante.mot }}</span>
+                <button class="btn-prononcer-carte" (click)="prononcerMot(carteCourante.mot); $event.stopPropagation()" title="Prononcer">&#9654;</button>
+              }
+            </div>
+            <div class="face-indice">Cliquez pour retourner</div>
+          </div>
+
+          <!-- Face définition -->
+          <div class="carte-face carte-face-arriere">
+            @if (carteCourante) {
+              @if (carteCourante.chargement) {
+                <div class="def-chargement">Recherche de la d&eacute;finition...</div>
+              } @else if (carteCourante.erreur) {
+                <div class="def-erreur-carte">{{ carteCourante.erreur }}</div>
+              } @else if (carteCourante.definition) {
+                @let def = carteCourante.definition;
+                <div class="def-carte-contenu">
+                  @if (def.prononciation.length) {
+                    <div class="def-carte-prononciation">
+                      @for (ipa of def.prononciation; track ipa) {
+                        <span class="ipa-carte">{{ ipa }}</span>
+                      }
+                    </div>
+                  }
+                  @for (nature of def.natures; track $index) {
+                    <div class="def-carte-nature">
+                      <span class="nature-carte-titre">{{ nature.nature }}</span>
+                      <ul class="nature-carte-defs">
+                        @for (sens of nature.definitions; track i; let i = $index) {
+                          <li>{{ sens }}</li>
+                        }
+                      </ul>
+                    </div>
+                  }
+                  @if (def.synonymes.length) {
+                    <div class="def-carte-synonymes">
+                      <span class="syn-carte-titre">Synonymes</span>
+                      <div class="syn-carte-liste">
+                        @for (syn of def.synonymes; track syn) {
+                          <span class="syn-carte-mot">{{ syn }}</span>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              } @else {
+                <div class="def-erreur-carte">D&eacute;finition non disponible</div>
+              }
+            }
+            <div class="face-indice">Cliquez pour retourner</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <div class="navigation-cartes">
+        <button
+          class="btn-nav"
+          [class.btn-nav-desactive]="!peutPrecedent"
+          [disabled]="!peutPrecedent"
+          (click)="cartePrecedente()"
+          title="Pr&eacute;c&eacute;dent">&lsaquo; Pr&eacute;c&eacute;dent</button>
+        <span class="nav-compteur">{{ indexCourant + 1 }} / {{ totalCartes }}</span>
+        <button
+          class="btn-nav"
+          (click)="carteSuivante()"
+          title="Suivant">Suivant &rsaquo;</button>
+      </div>
+    </div>
+  }
+</div>
