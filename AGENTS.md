@@ -6,14 +6,14 @@
 npm install
 ng serve              # dev server at http://localhost:4200
 ng build              # build to dist/read-helper
-ng test               # Karma + Jasmine unit tests
+npm test              # Jest unit tests
 ```
 
 ## Architecture
 
-- **Single Angular module** (`AppModule`) — no routing, no lazy loading.
-- **Entry point**: `src/main.ts` → `AppModule` → `AppComponent` (shell) → `OcrSpeechComponent`.
-- **`OcrSpeechComponent`** at `src/app/features/scanner/ocr-speech/` owns all UI (scan button, voice selector, image preview, read/stop buttons).
+- **Standalone components** (no `AppModule`) — `bootstrapApplication` in `main.ts`.
+- **Entry point**: `src/main.ts` → `AppComponent` (shell) → `OcrSpeechComponent`.
+- **`OcrSpeechComponent`** at `src/app/features/ocr-speech/` owns all UI (scan button, voice selector, image preview, read/stop buttons).
 - **`AppComponent`** is a minimal shell — just renders `<app-ocr-speech>`.
 - **Three single-responsibility services** in `src/app/core/services/`:
   | Service | Responsibility |
@@ -40,7 +40,9 @@ Users select a specific TTS voice from the dropdown (filtered to French) for mor
 - **tesseract.js** is a CommonJS dependency — listed in `angular.json` → `allowedCommonJsDependencies` to avoid build warnings.
 - **SCSS** is the default style language (configured in `angular.json`).
 - **TypeScript strict mode** is on (`strict: true` in tsconfig.json).
-- **app.component.spec.ts** test is outdated — references `.content span` selector that no longer exists in the template. Don't trust it as source of truth for current layout.
+- **Standalone components** — all components use `inject()` instead of constructor DI.
+- **New Angular control flow** — `@if`/`@for` instead of `*ngIf`/`*ngFor`.
+- **Signals** — not used yet; plain fields remain.
 
 ## Code conventions
 
@@ -59,6 +61,7 @@ npx cap run android                 # run on device/emulator
 ## Testing
 
 ```bash
-ng test --watch=false               # single run (CI)
-ng test --browsers=ChromeHeadless   # headless (no UI needed)
+npm test                    # single run (CI) — Jest
+npm run test:watch          # watch mode
+npm run test:coverage       # with coverage
 ```

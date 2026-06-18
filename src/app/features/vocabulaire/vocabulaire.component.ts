@@ -1,40 +1,32 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Subject } from 'rxjs';
-import { takeUntil, tap } from 'rxjs/operators';
+import { Component, inject, DestroyRef } from '@angular/core';
+import { map, tap } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Definition } from '../../core/model/definition.model';
 import { MotVocabulaire } from '../../core/model/vocabulaire.model';
 import { DictionnaireService } from '../../core/services/dictionnaire.service';
 import { VocabulaireService } from '../../core/services/vocabulaire.service';
+import { RouterLink } from '@angular/router';
 
 @Component({
-  selector: 'app-vocabulaire',
-  templateUrl: './vocabulaire.component.html',
-  styleUrls: ['./vocabulaire.component.scss']
+    selector: 'app-vocabulaire',
+    templateUrl: './vocabulaire.component.html',
+    styleUrls: ['./vocabulaire.component.scss'],
+    imports: [RouterLink],
 })
-export class VocabulaireComponent implements OnInit, OnDestroy {
+export class VocabulaireComponent {
   mots: MotVocabulaire[] = [];
   definitions: Map<string, Definition> = new Map();
   chargementDef: Map<string, boolean> = new Map();
   erreurDef: Map<string, string> = new Map();
   motExpanded: string | null = null;
 
-  private destroy$ = new Subject<void>();
+  private destroyRef = inject(DestroyRef);
+  private vocabulaireService = inject(VocabulaireService);
+  private dictionnaireService = inject(DictionnaireService);
 
-  constructor(
-    private vocabulaireService: VocabulaireService,
-    private dictionnaireService: DictionnaireService,
-  ) {}
-
-  ngOnInit() {
-    this.vocabulaireService.getMots().pipe(
-      takeUntil(this.destroy$),
-    ).subscribe(mots => this.mots = mots);
-  }
-
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
+  private motsSub = this.vocabulaireService.getMots().pipe(
+    takeUntilDestroyed(this.destroyRef),
+  ).subscribe(mots => this.mots = mots);
 
   formaterDate(iso: string): string {
     const d = new Date(iso);
@@ -49,14 +41,14 @@ export class VocabulaireComponent implements OnInit, OnDestroy {
         if (mot) this.definitions.delete(mot.mot.toLowerCase());
         if (this.motExpanded === id) this.motExpanded = null;
       }),
-      takeUntil(this.destroy$),
+      takeUntilDestroyed(this.destroyRef),
     ).subscribe();
   }
 
   recharger() {
     this.vocabulaireService.getMots().pipe(
       tap(mots => this.mots = mots),
-      takeUntil(this.destroy$),
+      takeUntilDestroyed(this.destroyRef),
     ).subscribe();
   }
 
@@ -84,7 +76,7 @@ export class VocabulaireComponent implements OnInit, OnDestroy {
           this.erreurDef.set(key, 'Définition introuvable sur le Wiktionnaire');
         }
       }),
-      takeUntil(this.destroy$),
+      takeUntilDestroyed(this.destroyRef),
     ).subscribe();
   }
 }
