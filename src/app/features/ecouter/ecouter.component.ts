@@ -54,7 +54,7 @@ export class EcouterComponent {
       tap(voices => {
         this.toutesLesVoix = voices;
         this.voixDisponibles = voices.filter(v =>
-          v.lang.toLowerCase().startsWith('fr'),
+          v.lang.toLowerCase() === 'fr-fr',
         );
       }),
       takeUntilDestroyed(this.destroyRef),
