@@ -18,6 +18,10 @@ export class DictionnaireService {
 
   constructor(private http: HttpClient) {}
 
+  nettoyerMot(mot: string): string {
+    return mot.replace(/^[ldsnmstcj]'\s*/i, '').trim();
+  }
+
   getDefinition(mot: string): Observable<Definition | null> {
     const motPropre = this.nettoyerMot(mot).toLowerCase();
     if (!motPropre) return of(null);
@@ -34,12 +38,6 @@ export class DictionnaireService {
 
   viderCache(): Observable<void> {
     return defer(() => Preferences.remove({ key: CACHE_KEY }));
-  }
-
-  // Utilitaires
-
-  private nettoyerMot(mot: string): string {
-    return mot.replace(/^[ldsnmstcj]'\s*/i, '').trim();
   }
 
   // Cache
@@ -133,17 +131,28 @@ export class DictionnaireService {
         }
       }
 
-      const definitions: string[] = [];
+      const defsSet = new Set<string>();
       ol.querySelectorAll(':scope > li').forEach(li => {
         li.querySelectorAll('ul').forEach(u => u.remove());
         const text = li.textContent?.trim();
         if (text) {
-          definitions.push(text.replace(/\s+/g, ' ').trim());
+          defsSet.add(text.replace(/\s+/g, ' ').trim());
         }
       });
 
+      const definitions = Array.from(defsSet);
+
       if (definitions.length > 0) {
-        natures.push({ nature, definitions });
+        const existante = natures.find(n => n.nature === nature);
+        if (existante) {
+          for (const d of definitions) {
+            if (!existante.definitions.includes(d)) {
+              existante.definitions.push(d);
+            }
+          }
+        } else {
+          natures.push({ nature, definitions });
+        }
       }
     });
 

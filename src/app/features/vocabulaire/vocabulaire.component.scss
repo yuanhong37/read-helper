@@ -187,7 +187,31 @@ h2 {
     font-size: 14px;
     color: #333;
     line-height: 1.5;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+  }
+}
+
+.def-texte {
+  flex: 1;
+}
+
+.btn-def-prononcer {
+  flex-shrink: 0;
+  background: none;
+  border: 1px solid transparent;
+  font-size: 12px;
+  cursor: pointer;
+  color: #888;
+  padding: 0 4px;
+  line-height: 1.4;
+  border-radius: 3px;
+
+  &:hover {
+    color: #007bff;
+    border-color: #007bff;
   }
 }
 
@@ -215,15 +239,32 @@ h2 {
 }
 
 .synonyme-mot {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 13px;
   color: #155724;
   background: #d4edda;
-  padding: 2px 10px;
+  padding: 2px 6px 2px 10px;
   border-radius: 12px;
 
   &:hover {
     background: #c3e6cb;
+  }
+}
+
+.btn-syn-prononcer {
+  background: none;
+  border: none;
+  font-size: 10px;
+  cursor: pointer;
+  color: #155724;
+  padding: 0 2px;
+  line-height: 1;
+  opacity: 0.6;
+
+  &:hover {
+    opacity: 1;
   }
 }
 
@@ -236,5 +277,203 @@ h2 {
 
   &:hover {
     text-decoration: underline;
+  }
+}
+
+/* ---- Feedback ---- */
+
+.feedback {
+  padding: 8px 14px;
+  margin-bottom: 12px;
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 6px;
+  color: #856404;
+  font-size: 14px;
+  text-align: center;
+}
+
+/* ---- Formulaire d'ajout ---- */
+
+.ajout-form {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.ajout-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+
+  &:focus {
+    border-color: #007bff;
+  }
+}
+
+.btn-ajouter {
+  padding: 8px 16px;
+  background: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+
+  &:hover:not(:disabled) {
+    background: #0069d9;
+  }
+}
+
+/* ---- Contrôles de tri ---- */
+
+.controles-tri {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.btn-tri {
+  padding: 4px 12px;
+  background: #f0f0f0;
+  border: 1px solid #ddd;
+  border-radius: 14px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #555;
+
+  &:hover {
+    background: #e0e0e0;
+  }
+}
+
+.btn-tri-actif {
+  background: #007bff;
+  color: #fff;
+  border-color: #007bff;
+
+  &:hover {
+    background: #0069d9;
+  }
+}
+
+/* ---- Boutons prononcer / éditer ---- */
+
+.btn-prononcer,
+.btn-editer {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+  color: #555;
+
+  &:hover {
+    color: #007bff;
+  }
+}
+
+/* ---- Mode édition inline ---- */
+
+.mot-edition {
+  border-color: #ffc107;
+}
+
+.mot-ligne-edition {
+  padding: 6px 14px;
+}
+
+.edit-input {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid #ffc107;
+  border-radius: 4px;
+  font-size: 15px;
+  outline: none;
+  font-weight: 600;
+
+  &:focus {
+    border-color: #e0a800;
+  }
+}
+
+.btn-valider {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #28a745;
+  cursor: pointer;
+  padding: 0 6px;
+  line-height: 1;
+
+  &:hover {
+    color: #1e7e34;
+  }
+}
+
+.btn-annuler {
+  background: none;
+  border: none;
+  font-size: 22px;
+  color: #cc0000;
+  cursor: pointer;
+  padding: 0 6px;
+  line-height: 1;
+
+  &:hover {
+    color: #ff0000;
+  }
+}
+
+/* ---- Pagination ---- */
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.btn-page {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  background: #f0f0f0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #555;
+  text-align: center;
+
+  &:hover:not(:disabled) {
+    background: #e0e0e0;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+}
+
+.btn-page-actif {
+  background: #007bff;
+  color: #fff;
+  border-color: #007bff;
+
+  &:hover {
+    background: #0069d9;
   }
 }

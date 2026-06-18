@@ -40,6 +40,22 @@ export class VocabulaireService {
     );
   }
 
+  modifierMot(id: string, nouveauMot: string): Observable<boolean> {
+    const nouveauLower = nouveauMot.toLowerCase();
+    return this.getMots().pipe(
+      map(mots => {
+        const existe = mots.some(m => m.id !== id && m.mot.toLowerCase() === nouveauLower);
+        if (existe) return { mots: null as MotVocabulaire[] | null, modifie: false };
+        const updated = mots.map(m => m.id === id ? { ...m, mot: nouveauMot } : m);
+        return { mots: updated, modifie: true };
+      }),
+      switchMap(({ mots, modifie }) => {
+        if (!modifie || !mots) return from(Promise.resolve(false));
+        return from(Preferences.set({ key: STORAGE_KEY, value: JSON.stringify(mots) })).pipe(map(() => true));
+      }),
+    );
+  }
+
   supprimerMot(id: string): Observable<void> {
     return this.getMots().pipe(
       map(mots => mots.filter(m => m.id !== id)),
