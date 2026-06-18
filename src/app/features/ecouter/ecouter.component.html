@@ -1,0 +1,101 @@
+<div class="ecouter-container">
+  <div class="ecouter-header">
+    <a routerLink="/vocabulaire" class="retour-link">&larr; Vocabulaire</a>
+    <h2>&Eacute;couter</h2>
+  </div>
+
+  <!-- Écran d'accueil -->
+  @if (!enLecture && !termine) {
+    <div class="ecran-accueil">
+      @if (nbMots === 0) {
+        <p class="message-vide">
+          Aucun mot dans le vocabulaire.<br/>
+          <a routerLink="/vocabulaire" class="lien-ajout">Ajoutez-en depuis la page Vocabulaire</a>
+        </p>
+      } @else {
+        <div class="accueil-contenu">
+          <div class="accueil-icone">&#9654;</div>
+          <p class="accueil-texte">{{ nbMots }} mot{{ nbMots > 1 ? 's' : '' }} disponible{{ nbMots > 1 ? 's' : '' }}</p>
+
+          @if (voixDisponibles.length > 0) {
+            <div class="controle-voix">
+              <label class="voix-label" for="selectVoix">Voix</label>
+              <select id="selectVoix" class="select-voix" (change)="surChangementVoix($event)">
+                @for (v of voixDisponibles; track v.voiceURI) {
+                  <option [value]="toutesLesVoix.indexOf(v)"
+                    [selected]="toutesLesVoix.indexOf(v) === voixSelectionnee">
+                    {{ v.voiceURI }} ({{ v.lang }})
+                  </option>
+                }
+              </select>
+            </div>
+          }
+
+          <label class="boucle-label">
+            <input type="checkbox" [checked]="modeBoucle" (change)="basculerBoucle()" />
+            Lecture en boucle
+          </label>
+
+          <button class="btn-commencer" (click)="commencerLecture()">Commencer l'&eacute;coute</button>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Écran de lecture -->
+  @if (enLecture && !termine) {
+    <div class="ecran-lecture">
+      <div class="progression-mot">{{ progressionMot }}</div>
+
+      <div class="carte-lecture">
+        @if (itemCourant) {
+          @if (itemCourant.type === 'mot') {
+            <div class="lecture-mot">
+              <span class="mot-titre">{{ itemCourant.texte }}</span>
+              <button class="btn-prononcer" (click)="reprononcerMotCourant(); $event.stopPropagation()" title="R&eacute;-&eacute;couter">&#9654;</button>
+            </div>
+          } @else {
+            <div class="lecture-def">
+              @if (itemCourant.natureLabel) {
+                <span class="def-nature-label">{{ itemCourant.natureLabel }}</span>
+              }
+              <span class="def-texte">{{ itemCourant.texte }}</span>
+            </div>
+          }
+        }
+      </div>
+
+      <div class="barre-progression">
+        <div class="barre-remplie" [style.width.%]="(indexCourant / totalItems) * 100"></div>
+      </div>
+      <div class="compteur-items">{{ indexCourant + 1 }} / {{ totalItems }}</div>
+
+      <div class="controles-lecture">
+        @if (!enPause) {
+          <button class="btn-ctrl btn-pause" (click)="pauseLecture()">&#9646;&#9646; Pause</button>
+        } @else {
+          <button class="btn-ctrl btn-reprendre" (click)="reprendreLecture()">&#9654; Reprendre</button>
+        }
+        <button class="btn-ctrl btn-stop" (click)="arreterLecture()">&#9632; Arr&ecirc;ter</button>
+      </div>
+
+      <label class="boucle-label boucle-lecture">
+        <input type="checkbox" [checked]="modeBoucle" (change)="basculerBoucle()" />
+        Boucle
+      </label>
+    </div>
+  }
+
+  <!-- Écran terminé -->
+  @if (termine) {
+    <div class="ecran-fin">
+      <div class="fin-icone">&#10003;</div>
+      <h3>&Eacute;coute termin&eacute;e !</h3>
+      <p>{{ nbMots }} mot{{ nbMots > 1 ? 's' : '' }} lu{{ nbMots > 1 ? 's' : '' }}</p>
+      <div class="actions-fin">
+        <button class="btn-rejouer" (click)="rejouer()">Rejouer</button>
+        <a routerLink="/vocabulaire" class="btn-retour">Retour au vocabulaire</a>
+      </div>
+    </div>
+  }
+</div>
