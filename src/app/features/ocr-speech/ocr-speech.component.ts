@@ -13,6 +13,10 @@ const DELAI_MOT_BASE_MS = 300;
 const DELAI_PHRASE_MS = 50;
 const DELAI_PHRASE_BASE_MS = 500;
 
+type InteractionMode = 'none' | 'drawing' | 'moving'
+  | 'resize-tl' | 'resize-tr' | 'resize-bl' | 'resize-br'
+  | 'resize-top' | 'resize-bottom' | 'resize-left' | 'resize-right';
+
 @Component({
   selector: 'app-ocr-speech',
   templateUrl: './ocr-speech.component.html',
@@ -37,8 +41,9 @@ export class OcrSpeechComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   private longPressTimer: any = null;
   private longPressDetected = false;
+  private interactionMode: InteractionMode = 'none';
   private debutSelection: { x: number; y: number } | null = null;
-  private estEnTrainDeDessiner = false;
+  private dragOffset: { x: number; y: number } | null = null;
   private imageChargee: HTMLImageElement | null = null;
   selectionActuelle: { x: number; y: number; w: number; h: number } | null = null;
 
@@ -63,14 +68,6 @@ export class OcrSpeechComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    this.vocabulaireService.getMots().pipe(takeUntil(this.destroy$)).subscribe(mots => {
-      this.motsSauvegardes = new Set(mots.map(m => m.mot.toLowerCase()));
-    });
-
-    this.vocabulaireService.chargerTexteActif().pipe(takeUntil(this.destroy$)).subscribe(texte => {
-      if (texte) this.texteExtrait = texte;
-    });
-
     this.ttsService.getVoices$().pipe(
       takeUntil(this.destroy$),
     ).subscribe(voices => {
@@ -96,6 +93,7 @@ export class OcrSpeechComponent implements OnInit, OnDestroy {
   }
 
   lancerLeScan() {
+    this.detruireCanvas();
     this.enCoursDeChargement = true;
     this.enCoursDeLecture = false;
     this.texteExtrait = '';
@@ -145,17 +143,14 @@ export class OcrSpeechComponent implements OnInit, OnDestroy {
       return;
     }
     const s = this.selectionActuelle;
-    const canvas = this.canvasRef.nativeElement;
-    const scaleX = this.imageChargee.naturalWidth / canvas.width;
-    const scaleY = this.imageChargee.naturalHeight / canvas.height;
     const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = Math.round(s.w * scaleX);
-    tempCanvas.height = Math.round(s.h * scaleY);
+    tempCanvas.width = Math.round(s.w);
+    tempCanvas.height = Math.round(s.h);
     const tempCtx = tempCanvas.getContext('2d')!;
     tempCtx.drawImage(
       this.imageChargee,
-      Math.round(s.x * scaleX), Math.round(s.y * scaleY),
-      Math.round(s.w * scaleX), Math.round(s.h * scaleY),
+      Math.round(s.x), Math.round(s.y),
+      Math.round(s.w), Math.round(s.h),
       0, 0,
       tempCanvas.width, tempCanvas.height,
     );
@@ -168,56 +163,209 @@ export class OcrSpeechComponent implements OnInit, OnDestroy {
   }
 
   onCanvasMouseDown(event: MouseEvent) {
-    const rect = this.canvasRef.nativeElement.getBoundingClientRect();
-    this.debutSelection = { x: event.clientX - rect.left, y: event.clientY - rect.top };
-    this.estEnTrainDeDessiner = true;
+    const { x, y } = this.getCanvasCoords(event.clientX, event.clientY);
+
+    const handle = this.getHandleAt(x, y);
+    if (handle) {
+      this.interactionMode = handle;
+      this.debutSelection = { x, y };
+      return;
+    }
+
+    if (this.selectionActuelle && this.isInsideRect(x, y)) {
+      this.interactionMode = 'moving';
+      this.dragOffset = { x: x - this.selectionActuelle.x, y: y - this.selectionActuelle.y };
+      return;
+    }
+
+    if (this.selectionActuelle) {
+      this.selectionActuelle = null;
+      this.interactionMode = 'none';
+      this.redessiner();
+    } else {
+      this.debutSelection = { x, y };
+      this.interactionMode = 'drawing';
+    }
   }
 
   onCanvasMouseMove(event: MouseEvent) {
-    if (!this.estEnTrainDeDessiner || !this.debutSelection) return;
-    const rect = this.canvasRef.nativeElement.getBoundingClientRect();
-    const x2 = event.clientX - rect.left;
-    const y2 = event.clientY - rect.top;
-    this.selectionActuelle = {
-      x: Math.min(this.debutSelection.x, x2),
-      y: Math.min(this.debutSelection.y, y2),
-      w: Math.abs(x2 - this.debutSelection.x),
-      h: Math.abs(y2 - this.debutSelection.y),
-    };
-    this.redessiner();
+    const { x, y } = this.getCanvasCoords(event.clientX, event.clientY);
+
+    if (this.interactionMode === 'drawing' && this.debutSelection) {
+      this.selectionActuelle = {
+        x: Math.min(this.debutSelection.x, x),
+        y: Math.min(this.debutSelection.y, y),
+        w: Math.abs(x - this.debutSelection.x),
+        h: Math.abs(y - this.debutSelection.y),
+      };
+      this.redessiner();
+      return;
+    }
+
+    if (this.interactionMode === 'moving' && this.dragOffset && this.selectionActuelle) {
+      const canvas = this.canvasRef.nativeElement;
+      const s = this.selectionActuelle;
+      let nx = x - this.dragOffset.x;
+      let ny = y - this.dragOffset.y;
+      nx = Math.max(0, Math.min(nx, canvas.width - s.w));
+      ny = Math.max(0, Math.min(ny, canvas.height - s.h));
+      this.selectionActuelle = { x: nx, y: ny, w: s.w, h: s.h };
+      this.redessiner();
+      return;
+    }
+
+    if (this.interactionMode.startsWith('resize-') && this.debutSelection && this.selectionActuelle) {
+      const s = this.selectionActuelle;
+      const minSize = 10;
+      let nx = s.x, ny = s.y, nw = s.w, nh = s.h;
+
+      if (this.interactionMode === 'resize-tl') {
+        nx = Math.min(x, s.x + s.w - minSize);
+        ny = Math.min(y, s.y + s.h - minSize);
+        nw = s.x + s.w - nx;
+        nh = s.y + s.h - ny;
+      } else if (this.interactionMode === 'resize-tr') {
+        ny = Math.min(y, s.y + s.h - minSize);
+        nw = Math.max(minSize, x - s.x);
+        nh = s.y + s.h - ny;
+      } else if (this.interactionMode === 'resize-bl') {
+        nx = Math.min(x, s.x + s.w - minSize);
+        nw = s.x + s.w - nx;
+        nh = Math.max(minSize, y - s.y);
+      } else if (this.interactionMode === 'resize-br') {
+        nw = Math.max(minSize, x - s.x);
+        nh = Math.max(minSize, y - s.y);
+      } else if (this.interactionMode === 'resize-top') {
+        ny = Math.min(y, s.y + s.h - minSize);
+        nh = s.y + s.h - ny;
+      } else if (this.interactionMode === 'resize-bottom') {
+        nh = Math.max(minSize, y - s.y);
+      } else if (this.interactionMode === 'resize-left') {
+        nx = Math.min(x, s.x + s.w - minSize);
+        nw = s.x + s.w - nx;
+      } else if (this.interactionMode === 'resize-right') {
+        nw = Math.max(minSize, x - s.x);
+      }
+
+      this.selectionActuelle = { x: nx, y: ny, w: nw, h: nh };
+      this.redessiner();
+      return;
+    }
+
+    const handleHover = this.getHandleAt(x, y);
+    if (handleHover) {
+      this.canvasRef.nativeElement.style.cursor = this.cursorForMode(handleHover);
+    } else if (this.selectionActuelle && this.isInsideRect(x, y)) {
+      this.canvasRef.nativeElement.style.cursor = 'move';
+    } else {
+      this.canvasRef.nativeElement.style.cursor = 'crosshair';
+    }
   }
 
   onCanvasMouseUp(_event: MouseEvent) {
-    this.estEnTrainDeDessiner = false;
+    this.interactionMode = 'none';
+    this.dragOffset = null;
   }
 
   onCanvasTouchStart(event: TouchEvent) {
     event.preventDefault();
     const touch = event.touches[0];
-    const rect = this.canvasRef.nativeElement.getBoundingClientRect();
-    this.debutSelection = { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
-    this.estEnTrainDeDessiner = true;
+    const { x, y } = this.getCanvasCoords(touch.clientX, touch.clientY);
+
+    const handle = this.getHandleAt(x, y);
+    if (handle) {
+      this.interactionMode = handle;
+      this.debutSelection = { x, y };
+      return;
+    }
+
+    if (this.selectionActuelle && this.isInsideRect(x, y)) {
+      this.interactionMode = 'moving';
+      this.dragOffset = { x: x - this.selectionActuelle.x, y: y - this.selectionActuelle.y };
+      return;
+    }
+
+    if (this.selectionActuelle) {
+      this.selectionActuelle = null;
+      this.interactionMode = 'none';
+      this.redessiner();
+    } else {
+      this.debutSelection = { x, y };
+      this.interactionMode = 'drawing';
+    }
   }
 
   onCanvasTouchMove(event: TouchEvent) {
     event.preventDefault();
-    if (!this.estEnTrainDeDessiner || !this.debutSelection) return;
     const touch = event.touches[0];
-    const rect = this.canvasRef.nativeElement.getBoundingClientRect();
-    const x2 = touch.clientX - rect.left;
-    const y2 = touch.clientY - rect.top;
-    this.selectionActuelle = {
-      x: Math.min(this.debutSelection.x, x2),
-      y: Math.min(this.debutSelection.y, y2),
-      w: Math.abs(x2 - this.debutSelection.x),
-      h: Math.abs(y2 - this.debutSelection.y),
-    };
-    this.redessiner();
+    const { x, y } = this.getCanvasCoords(touch.clientX, touch.clientY);
+
+    if (this.interactionMode === 'drawing' && this.debutSelection) {
+      this.selectionActuelle = {
+        x: Math.min(this.debutSelection.x, x),
+        y: Math.min(this.debutSelection.y, y),
+        w: Math.abs(x - this.debutSelection.x),
+        h: Math.abs(y - this.debutSelection.y),
+      };
+      this.redessiner();
+      return;
+    }
+
+    if (this.interactionMode === 'moving' && this.dragOffset && this.selectionActuelle) {
+      const canvas = this.canvasRef.nativeElement;
+      const s = this.selectionActuelle;
+      let nx = x - this.dragOffset.x;
+      let ny = y - this.dragOffset.y;
+      nx = Math.max(0, Math.min(nx, canvas.width - s.w));
+      ny = Math.max(0, Math.min(ny, canvas.height - s.h));
+      this.selectionActuelle = { x: nx, y: ny, w: s.w, h: s.h };
+      this.redessiner();
+      return;
+    }
+
+    if (this.interactionMode.startsWith('resize-') && this.debutSelection && this.selectionActuelle) {
+      const s = this.selectionActuelle;
+      const minSize = 10;
+      let nx = s.x, ny = s.y, nw = s.w, nh = s.h;
+
+      if (this.interactionMode === 'resize-tl') {
+        nx = Math.min(x, s.x + s.w - minSize);
+        ny = Math.min(y, s.y + s.h - minSize);
+        nw = s.x + s.w - nx;
+        nh = s.y + s.h - ny;
+      } else if (this.interactionMode === 'resize-tr') {
+        ny = Math.min(y, s.y + s.h - minSize);
+        nw = Math.max(minSize, x - s.x);
+        nh = s.y + s.h - ny;
+      } else if (this.interactionMode === 'resize-bl') {
+        nx = Math.min(x, s.x + s.w - minSize);
+        nw = s.x + s.w - nx;
+        nh = Math.max(minSize, y - s.y);
+      } else if (this.interactionMode === 'resize-br') {
+        nw = Math.max(minSize, x - s.x);
+        nh = Math.max(minSize, y - s.y);
+      } else if (this.interactionMode === 'resize-top') {
+        ny = Math.min(y, s.y + s.h - minSize);
+        nh = s.y + s.h - ny;
+      } else if (this.interactionMode === 'resize-bottom') {
+        nh = Math.max(minSize, y - s.y);
+      } else if (this.interactionMode === 'resize-left') {
+        nx = Math.min(x, s.x + s.w - minSize);
+        nw = s.x + s.w - nx;
+      } else if (this.interactionMode === 'resize-right') {
+        nw = Math.max(minSize, x - s.x);
+      }
+
+      this.selectionActuelle = { x: nx, y: ny, w: nw, h: nh };
+      this.redessiner();
+      return;
+    }
   }
 
   onCanvasTouchEnd(event: TouchEvent) {
     event.preventDefault();
-    this.estEnTrainDeDessiner = false;
+    this.interactionMode = 'none';
+    this.dragOffset = null;
   }
 
   prononcerMot(mot: string, index: number) {
@@ -331,14 +479,16 @@ export class OcrSpeechComponent implements OnInit, OnDestroy {
       const maxWidth = parent.clientWidth;
       const maxHeight = window.innerHeight * 0.6;
       const aspectRatio = img.naturalWidth / img.naturalHeight;
-      let w = maxWidth;
-      let h = w / aspectRatio;
-      if (h > maxHeight) {
-        h = maxHeight;
-        w = h * aspectRatio;
+      let displayW = maxWidth;
+      let displayH = displayW / aspectRatio;
+      if (displayH > maxHeight) {
+        displayH = maxHeight;
+        displayW = displayH * aspectRatio;
       }
-      canvas.width = w;
-      canvas.height = h;
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      canvas.style.width = displayW + 'px';
+      canvas.style.height = displayH + 'px';
       this.redessiner();
     };
     img.src = this.imageOriginale;
@@ -367,12 +517,84 @@ export class OcrSpeechComponent implements OnInit, OnDestroy {
       ctx.fillRect(cx - hs / 2, cy - hs / 2, hs, hs);
       ctx.strokeRect(cx - hs / 2, cy - hs / 2, hs, hs);
     }
+    for (const [cx, cy] of [[s.x + s.w / 2, s.y], [s.x + s.w / 2, s.y + s.h], [s.x, s.y + s.h / 2], [s.x + s.w, s.y + s.h / 2]]) {
+      ctx.fillRect(cx - hs / 2, cy - hs / 2, hs, hs);
+      ctx.strokeRect(cx - hs / 2, cy - hs / 2, hs, hs);
+    }
+  }
+
+  private getCanvasCoords(clientX: number, clientY: number): { x: number; y: number } {
+    const canvas = this.canvasRef.nativeElement;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    return {
+      x: (clientX - rect.left) * scaleX,
+      y: (clientY - rect.top) * scaleY,
+    };
+  }
+
+  private getHandleAt(x: number, y: number): InteractionMode | null {
+    if (!this.selectionActuelle) return null;
+    const s = this.selectionActuelle;
+    const hs = 8;
+    const corners: { mode: InteractionMode; cx: number; cy: number }[] = [
+      { mode: 'resize-tl', cx: s.x, cy: s.y },
+      { mode: 'resize-tr', cx: s.x + s.w, cy: s.y },
+      { mode: 'resize-bl', cx: s.x, cy: s.y + s.h },
+      { mode: 'resize-br', cx: s.x + s.w, cy: s.y + s.h },
+    ];
+    for (const h of corners) {
+      if (Math.abs(x - h.cx) <= hs / 2 && Math.abs(y - h.cy) <= hs / 2) {
+        return h.mode;
+      }
+    }
+    const edges: { mode: InteractionMode; cx: number; cy: number }[] = [
+      { mode: 'resize-top', cx: s.x + s.w / 2, cy: s.y },
+      { mode: 'resize-bottom', cx: s.x + s.w / 2, cy: s.y + s.h },
+      { mode: 'resize-left', cx: s.x, cy: s.y + s.h / 2 },
+      { mode: 'resize-right', cx: s.x + s.w, cy: s.y + s.h / 2 },
+    ];
+    for (const h of edges) {
+      if (Math.abs(x - h.cx) <= hs / 2 && Math.abs(y - h.cy) <= hs / 2) {
+        return h.mode;
+      }
+    }
+    return null;
+  }
+
+  private isInsideRect(x: number, y: number): boolean {
+    if (!this.selectionActuelle) return false;
+    const s = this.selectionActuelle;
+    return x >= s.x && x <= s.x + s.w && y >= s.y && y <= s.y + s.h;
+  }
+
+  private cursorForMode(mode: InteractionMode): string {
+    const map: Record<string, string> = {
+      'resize-tl': 'nwse-resize',
+      'resize-br': 'nwse-resize',
+      'resize-tr': 'nesw-resize',
+      'resize-bl': 'nesw-resize',
+      'resize-top': 'n-resize',
+      'resize-bottom': 's-resize',
+      'resize-left': 'w-resize',
+      'resize-right': 'e-resize',
+    };
+    return map[mode] || 'crosshair';
+  }
+
+  onWrapperClick(event: MouseEvent) {
+    if (event.target === event.currentTarget) {
+      this.selectionActuelle = null;
+      this.redessiner();
+    }
   }
 
   private detruireCanvas() {
     this.imageChargee = null;
     this.selectionActuelle = null;
     this.debutSelection = null;
-    this.estEnTrainDeDessiner = false;
+    this.interactionMode = 'none';
+    this.dragOffset = null;
   }
 }
