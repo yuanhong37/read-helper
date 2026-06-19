@@ -11,5 +11,5 @@ project(':capacitor-camera').projectDir = new File('../node_modules/@capacitor/c
 include ':capacitor-preferences'
 project(':capacitor-preferences').projectDir = new File('../node_modules/@capacitor/preferences/android')
 
-include ':jcesarmobile-capacitor-ocr'
-project(':jcesarmobile-capacitor-ocr').projectDir = new File('../node_modules/@jcesarmobile/capacitor-ocr/android')
+include ':pantrist-capacitor-plugin-ml-kit-text-recognition'
+project(':pantrist-capacitor-plugin-ml-kit-text-recognition').projectDir = new File('../node_modules/@pantrist/capacitor-plugin-ml-kit-text-recognition/android')

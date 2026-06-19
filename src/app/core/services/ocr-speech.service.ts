@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Capacitor } from '@capacitor/core';
-import { Ocr } from '@jcesarmobile/capacitor-ocr';
+import { CapacitorPluginMlKitTextRecognition } from '@pantrist/capacitor-plugin-ml-kit-text-recognition';
 import { createWorker, PSM } from 'tesseract.js';
 import { Observable, defer, from } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
@@ -13,8 +13,13 @@ export class OcrSpeechService {
     return this.preparerImage(imageSrc).pipe(
       switchMap(processedSrc => {
         if (Capacitor.isNativePlatform()) {
-          return defer(() => Ocr.process({ image: processedSrc })).pipe(
-            map(result => result.results.map(r => r.text).join('\n')),
+          const base64 = processedSrc.includes('base64,')
+            ? processedSrc.split('base64,')[1]
+            : processedSrc;
+          return defer(() =>
+            CapacitorPluginMlKitTextRecognition.detectText({ base64Image: base64, rotation: 0 })
+          ).pipe(
+            map(result => result.text),
           );
         }
 
@@ -37,24 +42,28 @@ export class OcrSpeechService {
   }
 
   private preparerImage(src: string): Observable<string> {
+    if (Capacitor.isNativePlatform()) {
+      return defer(() => Promise.resolve(src));
+    }
+
     return defer(() => {
       const img = new Image();
       return from(new Promise<string>((resolve, reject) => {
         img.onload = () => {
-          const canvas = document.createElement('canvas');
-          canvas.width = img.naturalWidth;
-          canvas.height = img.naturalHeight;
-          const ctx = canvas.getContext('2d')!;
-          ctx.drawImage(img, 0, 0);
-          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          const data = imageData.data;
-          for (let i = 0; i < data.length; i += 4) {
-            const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-            const v = gray > 128 ? 255 : 0;
-            data[i] = data[i + 1] = data[i + 2] = v;
+          let w = img.naturalWidth;
+          let h = img.naturalHeight;
+          if (w < 2000) {
+            const scale = 2000 / w;
+            w = Math.round(w * scale);
+            h = Math.round(h * scale);
           }
-          ctx.putImageData(imageData, 0, 0);
-          resolve(canvas.toDataURL('image/jpeg', 0.9));
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d')!;
+          ctx.imageSmoothingEnabled = true;
+          ctx.drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL('image/jpeg', 0.95));
         };
         img.onerror = reject;
         img.src = src;

@@ -28,7 +28,7 @@
     "@capacitor/cli": "^8.4.0",
     "@capacitor/core": "^8.4.0",
     "@capacitor/preferences": "^8.0.1",
-    "@jcesarmobile/capacitor-ocr": "^0.3.0",
+    "@pantrist/capacitor-plugin-ml-kit-text-recognition": "^8.0.0",
     "rxjs": "~7.8.0",
     "tesseract.js": "^5.1.1",
     "tslib": "^2.3.0",
